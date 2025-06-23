@@ -1,0 +1,96 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type AuthPayload {
+  accessToken: String!
+  refreshToken: String!
+  user: User!
+}
+
+input CompleteFileDto {
+  fileId: String!
+  parts: [FilePart!]!
+}
+
+input CreateFileDto {
+  filename: String!
+  mimetype: String!
+  size: Float!
+}
+
+input CreateUserInput {
+  displayName: String!
+  email: String!
+  password: String!
+  username: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type File {
+  _id: String!
+  clientToken: String
+  createdAt: DateTime!
+  filename: String!
+  mimetype: String!
+  size: Float!
+  uploadId: String
+}
+
+input FilePart {
+  etag: String!
+  partNumber: Float!
+}
+
+input LoginInput {
+  emailOrUsername: String!
+  password: String!
+}
+
+type Mutation {
+  completeFile(payload: CompleteFileDto!): File!
+  createFile(payload: CreateFileDto!): File!
+  deleteFile(id: String!): Boolean!
+  login(input: LoginInput!): AuthPayload!
+  logout(refreshToken: String!): Boolean!
+  logoutAllSessions(userId: String!): Boolean!
+  refreshToken(refreshToken: String!): AuthPayload!
+  register(input: CreateUserInput!): AuthPayload!
+  requestPasswordReset(email: String!): Boolean!
+  resetPassword(code: String!, newPassword: String!): Boolean!
+  updateProfile(input: UpdateUserInput!): User!
+  verifyEmail(code: String!): Boolean!
+}
+
+type Query {
+  getFileById(id: String!): File!
+  getUserFiles: [File!]!
+  getUserStorageStats: UserStorageStats!
+  me: User!
+}
+
+input UpdateUserInput {
+  avatarId: String
+  displayName: String
+}
+
+type User {
+  _id: ID!
+  avatarId: String
+  createdAt: DateTime!
+  displayName: String!
+  email: String!
+  isEmailVerified: Boolean!
+  updatedAt: DateTime!
+  username: String!
+}
+
+type UserStorageStats {
+  limit: Float!
+  remaining: Float!
+  used: Float!
+}

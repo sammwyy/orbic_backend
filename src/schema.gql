@@ -13,6 +13,68 @@ input CompleteFileDto {
   parts: [FilePart!]!
 }
 
+type Course {
+  _id: ID!
+  author: String!
+  bannerId: String
+  category: CourseCategory!
+  chaptersCount: Float!
+  createdAt: DateTime!
+  description: String!
+  isApproved: Boolean!
+  lang: String!
+  thumbnailId: String
+  title: String!
+  updatedAt: DateTime!
+  visibility: CourseVisibility!
+}
+
+"""Course category options"""
+enum CourseCategory {
+  ART
+  BUSINESS
+  HEALTH
+  HISTORY
+  LANGUAGE
+  MATHEMATICS
+  OTHER
+  SCIENCE
+  TECHNOLOGY
+}
+
+input CourseFilterInput {
+  author: String
+  category: CourseCategory
+  lang: String
+  search: String
+  visibility: CourseVisibility
+}
+
+"""Course visibility options"""
+enum CourseVisibility {
+  LINK_ONLY
+  PRIVATE
+  PUBLIC
+}
+
+type CoursesConnection {
+  courses: [Course!]!
+  hasMore: Boolean!
+  limit: Int!
+  offset: Int!
+  total: Int!
+}
+
+input CreateCourseInput {
+  bannerId: String
+  category: CourseCategory!
+  description: String!
+  lang: String!
+  thumbnailId: String
+  title: String!
+  visibility: CourseVisibility
+}
+
 input CreateFileDto {
   filename: String!
   mimetype: String!
@@ -53,7 +115,9 @@ input LoginInput {
 
 type Mutation {
   completeFile(payload: CompleteFileDto!): File!
+  createCourse(input: CreateCourseInput!): Course!
   createFile(payload: CreateFileDto!): File!
+  deleteCourse(id: ID!): Boolean!
   deleteFile(id: String!): Boolean!
   login(input: LoginInput!): AuthPayload!
   logout(refreshToken: String!): Boolean!
@@ -62,15 +126,30 @@ type Mutation {
   register(input: CreateUserInput!): AuthPayload!
   requestPasswordReset(email: String!): Boolean!
   resetPassword(code: String!, newPassword: String!): Boolean!
+  updateCourse(id: ID!, input: UpdateCourseInput!): Course!
+  updateCourseVisibility(id: ID!, visibility: CourseVisibility!): Course!
   updateProfile(input: UpdateUserInput!): User!
   verifyEmail(code: String!): Boolean!
 }
 
 type Query {
+  course(id: ID!): Course
+  courses(filter: CourseFilterInput, limit: Int = 20, offset: Int = 0): CoursesConnection!
   getFileById(id: String!): File!
   getUserFiles: [File!]!
   getUserStorageStats: UserStorageStats!
   me: User!
+  myCourses(limit: Int = 20, offset: Int = 0): CoursesConnection!
+  publicCourses(limit: Int = 20, offset: Int = 0): CoursesConnection!
+}
+
+input UpdateCourseInput {
+  bannerId: String
+  category: CourseCategory
+  description: String
+  lang: String
+  thumbnailId: String
+  title: String
 }
 
 input UpdateUserInput {

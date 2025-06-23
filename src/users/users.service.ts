@@ -9,7 +9,7 @@ import * as bcrypt from "bcryptjs";
 import { Model } from "mongoose";
 import { v4 as uuidv4 } from "uuid";
 
-import { randomString } from "@/common/utils/randomUtils";
+import { randomString } from "@/common/utils/random.utils";
 import { CreateUserInput } from "./dto/create-user.input";
 import { UpdateUserInput } from "./dto/update-user.input";
 import { User, UserDocument } from "./schemas/user.schema";

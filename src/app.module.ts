@@ -6,6 +6,7 @@ import { MongooseModule } from "@nestjs/mongoose";
 import { join } from "path";
 
 import { AuthModule } from "./auth/auth.module";
+import { CoursesModule } from "./courses/courses.module";
 import { SessionsModule } from "./sessions/sessions.module";
 import { StorageModule } from "./storage/storage.module";
 import { UsersModule } from "./users/users.module";
@@ -51,6 +52,7 @@ import { UsersModule } from "./users/users.module";
     SessionsModule,
     StorageModule,
     UsersModule,
+    CoursesModule,
   ],
 })
 export class AppModule {}

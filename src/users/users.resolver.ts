@@ -1,28 +1,29 @@
-import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
+import { UseGuards } from "@nestjs/common";
+import { Args, Mutation, Query, Resolver } from "@nestjs/graphql";
 
-import { UsersService } from './users.service';
-import { User } from './schemas/user.schema';
-import { UpdateUserInput } from './dto/update-user.input';
-import { GqlAuthGuard } from '../common/guards/gql-auth.guard';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { JwtPayload } from "@/common/interfaces/jwt-payload.interface";
+import { CurrentUser } from "../common/decorators/current-user.decorator";
+import { GqlAuthGuard } from "../common/guards/gql-auth.guard";
+import { UpdateUserInput } from "./dto/update-user.input";
+import { User } from "./schemas/user.schema";
+import { UsersService } from "./users.service";
 
 @Resolver(() => User)
 export class UsersResolver {
   constructor(private readonly usersService: UsersService) {}
 
-  @Query(() => User, { name: 'me' })
+  @Query(() => User, { name: "me" })
   @UseGuards(GqlAuthGuard)
-  async getMe(@CurrentUser() user: User): Promise<User> {
-    return this.usersService.findById(user._id.toString());
+  async getMe(@CurrentUser() user: JwtPayload): Promise<User> {
+    return this.usersService.findById(user.sub);
   }
 
   @Mutation(() => User)
   @UseGuards(GqlAuthGuard)
   async updateProfile(
-    @CurrentUser() user: User,
-    @Args('input') updateUserInput: UpdateUserInput,
+    @CurrentUser() user: JwtPayload,
+    @Args("input") updateUserInput: UpdateUserInput
   ): Promise<User> {
-    return this.usersService.update(user._id.toString(), updateUserInput);
+    return this.usersService.update(user.sub, updateUserInput);
   }
 }

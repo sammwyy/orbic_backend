@@ -22,6 +22,20 @@ export enum CourseCategory {
   OTHER = "other",
 }
 
+export type CourseCategoryType = (typeof COURSE_CATEGORIES)[number];
+
+export const COURSE_CATEGORIES = [
+  "mathematics",
+  "science",
+  "technology",
+  "language",
+  "history",
+  "art",
+  "business",
+  "health",
+  "other",
+] as const;
+
 // Register enums for GraphQL
 registerEnumType(CourseVisibility, {
   name: "CourseVisibility",

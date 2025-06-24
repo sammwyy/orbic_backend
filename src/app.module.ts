@@ -3,8 +3,10 @@ import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { GraphQLModule } from "@nestjs/graphql";
 import { MongooseModule } from "@nestjs/mongoose";
+import { ScheduleModule } from "@nestjs/schedule";
 import { join } from "path";
 
+import { AiModule } from "./ai/ai.module";
 import { AuthModule } from "./auth/auth.module";
 import { ChaptersModule } from "./chapters/chapters.module";
 import { CoursesModule } from "./courses/courses.module";
@@ -51,6 +53,8 @@ import { UsersModule } from "./users/users.module";
       }),
     }),
 
+    ScheduleModule.forRoot(),
+
     AuthModule,
     SessionsModule,
     StorageModule,
@@ -59,6 +63,7 @@ import { UsersModule } from "./users/users.module";
     ChaptersModule,
     LevelsModule,
     ProgressModule,
+    AiModule,
   ],
 })
 export class AppModule {}

@@ -61,6 +61,17 @@ input CourseFilterInput {
   visibility: CourseVisibility
 }
 
+type CourseGenerationStatus {
+  completedAt: DateTime
+  courseId: String
+  createdAt: DateTime!
+  error: String
+  jobId: String!
+  message: String
+  progress: Float!
+  status: String!
+}
+
 type CourseProgress {
   _id: ID!
   completed: Boolean!
@@ -155,6 +166,29 @@ type FreeChoiceQuestion {
   type: QuestionType!
 }
 
+input GenerateCourseFromFileInput {
+  category: CourseCategory
+  description: String
+  fileId: String!
+  lang: String
+  title: String
+}
+
+input GenerateCourseFromTextInput {
+  category: CourseCategory
+  content: String!
+  description: String
+  lang: String
+  title: String
+}
+
+type GeneratedCoursePreview {
+  chapterCount: Float!
+  course: Course!
+  sampleChapters: [Chapter!]!
+  sampleLevel: Level
+}
+
 type Level {
   _id: ID!
   chapterId: String!
@@ -207,6 +241,8 @@ type Mutation {
   deleteCourse(id: ID!): Boolean!
   deleteFile(id: String!): Boolean!
   deleteLevel(id: ID!): Boolean!
+  generateCourseFromFile(input: GenerateCourseFromFileInput!): String!
+  generateCourseFromText(input: GenerateCourseFromTextInput!): String!
   initializeCourseProgress(courseId: ID!): CourseProgress!
   login(input: LoginInput!): AuthPayload!
   logout(refreshToken: String!): Boolean!
@@ -248,6 +284,7 @@ type Query {
   courseChapters(courseId: ID!): [Chapter!]!
   courseProgress(courseId: ID!): CourseProgress
   courses(filter: CourseFilterInput, limit: Int = 20, offset: Int = 0): CoursesConnection!
+  getCourseGenerationStatus(jobId: String!): CourseGenerationStatus!
   getFileById(id: String!): File!
   getUserFiles: [File!]!
   getUserStorageStats: UserStorageStats!
@@ -256,6 +293,7 @@ type Query {
   myCompletedCourses: [CourseProgress!]!
   myCourses(limit: Int = 20, offset: Int = 0): CoursesConnection!
   myPlayingCourses: [CourseProgress!]!
+  previewGeneratedCourse(jobId: String!): GeneratedCoursePreview!
   publicCourses(limit: Int = 20, offset: Int = 0): CoursesConnection!
 }
 

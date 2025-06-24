@@ -208,6 +208,7 @@ export class QuestionInput {
   @IsString({ each: true })
   correctSequence?: string[];
 
+  // FREE_CHOICE
   @Field(() => [String], { nullable: true })
   @IsArray()
   @IsString({ each: true })

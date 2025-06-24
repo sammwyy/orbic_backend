@@ -6,7 +6,10 @@ import { MongooseModule } from "@nestjs/mongoose";
 import { join } from "path";
 
 import { AuthModule } from "./auth/auth.module";
+import { ChaptersModule } from "./chapters/chapters.module";
 import { CoursesModule } from "./courses/courses.module";
+import { LevelsModule } from "./levels/levels.module";
+import { ProgressModule } from "./progress/progress.module";
 import { SessionsModule } from "./sessions/sessions.module";
 import { StorageModule } from "./storage/storage.module";
 import { UsersModule } from "./users/users.module";
@@ -53,6 +56,9 @@ import { UsersModule } from "./users/users.module";
     StorageModule,
     UsersModule,
     CoursesModule,
+    ChaptersModule,
+    LevelsModule,
+    ProgressModule,
   ],
 })
 export class AppModule {}

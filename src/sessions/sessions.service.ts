@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Session, SessionDocument } from './schemas/session.schema';
+import { Injectable } from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model } from "mongoose";
+import { Session, SessionDocument } from "./schemas/session.schema";
 
 export interface CreateSessionData {
   refreshToken: string;
@@ -14,7 +14,7 @@ export interface CreateSessionData {
 @Injectable()
 export class SessionsService {
   constructor(
-    @InjectModel(Session.name) private sessionModel: Model<SessionDocument>,
+    @InjectModel(Session.name) private sessionModel: Model<SessionDocument>
   ) {}
 
   async createSession(sessionData: CreateSessionData): Promise<Session> {
@@ -33,26 +33,30 @@ export class SessionsService {
   }
 
   async findActiveSessionsByUserId(userId: string): Promise<Session[]> {
-    return this.sessionModel.find({
-      userId,
-      isActive: true,
-    }).sort({ createdAt: -1 });
+    return this.sessionModel
+      .find({
+        userId,
+        isActive: true,
+      })
+      .sort({ createdAt: -1 });
   }
 
   async findAllSessionsByUserId(userId: string): Promise<Session[]> {
-    return this.sessionModel.find({
-      userId,
-    }).sort({ createdAt: -1 });
+    return this.sessionModel
+      .find({
+        userId,
+      })
+      .sort({ createdAt: -1 });
   }
 
   async deactivateSession(refreshToken: string): Promise<void> {
     await this.sessionModel.findOneAndUpdate(
       { refreshToken },
-      { 
-        $set: { 
+      {
+        $set: {
           isActive: false,
-          updatedAt: new Date()
-        } 
+          updatedAt: new Date(),
+        },
       }
     );
   }
@@ -60,11 +64,11 @@ export class SessionsService {
   async deactivateAllUserSessions(userId: string): Promise<void> {
     await this.sessionModel.updateMany(
       { userId, isActive: true },
-      { 
-        $set: { 
+      {
+        $set: {
           isActive: false,
-          updatedAt: new Date()
-        } 
+          updatedAt: new Date(),
+        },
       }
     );
   }
@@ -72,10 +76,10 @@ export class SessionsService {
   async updateSessionActivity(refreshToken: string): Promise<void> {
     await this.sessionModel.findOneAndUpdate(
       { refreshToken, isActive: true },
-      { 
-        $set: { 
-          updatedAt: new Date()
-        } 
+      {
+        $set: {
+          updatedAt: new Date(),
+        },
       }
     );
   }
@@ -86,15 +90,14 @@ export class SessionsService {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
     await this.sessionModel.updateMany(
-      { 
-        createdAt: { $lt: sevenDaysAgo },
-        isActive: true 
+      {
+        updatedAt: { $lt: sevenDaysAgo },
+        isActive: true,
       },
-      { 
-        $set: { 
+      {
+        $set: {
           isActive: false,
-          updatedAt: new Date()
-        } 
+        },
       }
     );
   }

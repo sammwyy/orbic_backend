@@ -8,6 +8,17 @@ type AuthPayload {
   user: User!
 }
 
+type Chapter {
+  _id: ID!
+  courseId: String!
+  createdAt: DateTime!
+  description: String!
+  levelsCount: Float!
+  order: Float!
+  title: String!
+  updatedAt: DateTime!
+}
+
 input CompleteFileDto {
   fileId: String!
   parts: [FilePart!]!
@@ -50,6 +61,20 @@ input CourseFilterInput {
   visibility: CourseVisibility
 }
 
+type CourseProgress {
+  _id: ID!
+  completed: Boolean!
+  courseId: String!
+  createdAt: DateTime!
+  currentChapter: Int!
+  currentLevel: Int!
+  levelProgress: [LevelProgress!]!
+  totalMaxScore: Int!
+  totalScore: Int!
+  updatedAt: DateTime!
+  userId: String!
+}
+
 """Course visibility options"""
 enum CourseVisibility {
   LINK_ONLY
@@ -63,6 +88,13 @@ type CoursesConnection {
   limit: Int!
   offset: Int!
   total: Int!
+}
+
+input CreateChapterInput {
+  courseId: String!
+  description: String!
+  order: Float
+  title: String!
 }
 
 input CreateCourseInput {
@@ -79,6 +111,15 @@ input CreateFileDto {
   filename: String!
   mimetype: String!
   size: Float!
+}
+
+input CreateLevelInput {
+  chapterId: String!
+  courseId: String!
+  description: String!
+  order: Float
+  questions: [QuestionInput!]
+  title: String!
 }
 
 input CreateUserInput {
@@ -108,39 +149,153 @@ input FilePart {
   partNumber: Float!
 }
 
+type FreeChoiceQuestion {
+  acceptedAnswers: [String!]!
+  question: String!
+  type: QuestionType!
+}
+
+type Level {
+  _id: ID!
+  chapterId: String!
+  courseId: String!
+  createdAt: DateTime!
+  description: String!
+  order: Float!
+  questions: [Question!]!
+  title: String!
+  updatedAt: DateTime!
+}
+
+type LevelProgress {
+  attempts: Int!
+  completed: Boolean!
+  completedAt: DateTime!
+  levelId: String!
+  maxScore: Int!
+  score: Int!
+}
+
 input LoginInput {
   emailOrUsername: String!
   password: String!
 }
 
+type MultipleChoiceOption {
+  isCorrect: Boolean!
+  text: String!
+}
+
+input MultipleChoiceOptionInput {
+  isCorrect: Boolean!
+  text: String!
+}
+
+type MultipleChoiceQuestion {
+  options: [MultipleChoiceOption!]!
+  question: String!
+  type: QuestionType!
+}
+
 type Mutation {
   completeFile(payload: CompleteFileDto!): File!
+  createChapter(input: CreateChapterInput!): Chapter!
   createCourse(input: CreateCourseInput!): Course!
   createFile(payload: CreateFileDto!): File!
+  createLevel(input: CreateLevelInput!): Level!
+  deleteChapter(id: ID!): Boolean!
   deleteCourse(id: ID!): Boolean!
   deleteFile(id: String!): Boolean!
+  deleteLevel(id: ID!): Boolean!
+  initializeCourseProgress(courseId: ID!): CourseProgress!
   login(input: LoginInput!): AuthPayload!
   logout(refreshToken: String!): Boolean!
   logoutAllSessions(userId: String!): Boolean!
   refreshToken(refreshToken: String!): AuthPayload!
   register(input: CreateUserInput!): AuthPayload!
+  reorderChapters(chapterIds: [ID!]!, courseId: ID!): [Chapter!]!
+  reorderLevels(chapterId: ID!, levelIds: [ID!]!): [Level!]!
   requestPasswordReset(email: String!): Boolean!
   resetPassword(code: String!, newPassword: String!): Boolean!
+  updateChapter(id: ID!, input: UpdateChapterInput!): Chapter!
   updateCourse(id: ID!, input: UpdateCourseInput!): Course!
   updateCourseVisibility(id: ID!, visibility: CourseVisibility!): Course!
+  updateLevel(id: ID!, input: UpdateLevelInput!): Level!
   updateProfile(input: UpdateUserInput!): User!
   verifyEmail(code: String!): Boolean!
 }
 
+type PairItem {
+  left: String!
+  right: String!
+}
+
+input PairItemInput {
+  left: String!
+  right: String!
+}
+
+type PairsQuestion {
+  pairs: [PairItem!]!
+  question: String!
+  type: QuestionType!
+}
+
 type Query {
+  chapter(id: ID!): Chapter
+  chapterLevels(chapterId: ID!): [Level!]!
   course(id: ID!): Course
+  courseChapters(courseId: ID!): [Chapter!]!
+  courseProgress(courseId: ID!): CourseProgress
   courses(filter: CourseFilterInput, limit: Int = 20, offset: Int = 0): CoursesConnection!
   getFileById(id: String!): File!
   getUserFiles: [File!]!
   getUserStorageStats: UserStorageStats!
+  level(id: ID!): Level
   me: User!
+  myCompletedCourses: [CourseProgress!]!
   myCourses(limit: Int = 20, offset: Int = 0): CoursesConnection!
+  myPlayingCourses: [CourseProgress!]!
   publicCourses(limit: Int = 20, offset: Int = 0): CoursesConnection!
+}
+
+union Question = FreeChoiceQuestion | MultipleChoiceQuestion | PairsQuestion | SequenceQuestion | TrueFalseQuestion
+
+input QuestionInput {
+  acceptedAnswers: [String!]
+  correctAnswer: Boolean
+  correctSequence: [String!]
+  options: [MultipleChoiceOptionInput!]
+  pairs: [PairItemInput!]
+  question: String
+  type: QuestionType!
+}
+
+"""Available question types"""
+enum QuestionType {
+  FREE_CHOICE
+  MULTIPLE_CHOICE
+  PAIRS
+  SEQUENCE
+  TRUE_FALSE
+}
+
+type SequenceQuestion {
+  correctSequence: [String!]!
+  question: String!
+  type: QuestionType!
+}
+
+type TrueFalseQuestion {
+  correctAnswer: Boolean!
+  question: String!
+  type: QuestionType!
+}
+
+input UpdateChapterInput {
+  description: String
+  order: Float
+  title: String
 }
 
 input UpdateCourseInput {
@@ -149,6 +304,13 @@ input UpdateCourseInput {
   description: String
   lang: String
   thumbnailId: String
+  title: String
+}
+
+input UpdateLevelInput {
+  description: String
+  order: Float
+  questions: [QuestionInput!]
   title: String
 }
 

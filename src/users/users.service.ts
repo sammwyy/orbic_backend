@@ -10,7 +10,6 @@ import { Model } from "mongoose";
 import { v4 as uuidv4 } from "uuid";
 
 import { randomString } from "@/common/utils/random.utils";
-import { CreateUserInput } from "./dto/create-user.input";
 import { UpdateUserInput } from "./dto/update-user.input";
 import { User, UserDocument } from "./schemas/user.schema";
 
@@ -18,9 +17,12 @@ import { User, UserDocument } from "./schemas/user.schema";
 export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
-  async create(createUserInput: CreateUserInput): Promise<User> {
-    const { email, password, displayName, username } = createUserInput;
-
+  async create(
+    email: string,
+    password: string,
+    username: string,
+    displayName?: string
+  ): Promise<User> {
     // Check if user already exists
     const existingUser = await this.userModel.findOne({
       $or: [{ email }, { username }],

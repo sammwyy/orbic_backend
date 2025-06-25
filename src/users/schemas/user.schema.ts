@@ -11,18 +11,18 @@ export class User {
   @Field(() => ID)
   _id: Types.ObjectId;
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true, unique: true, lowercase: true })
   @Field()
   email: string;
 
   @Prop({ required: true })
   password: string;
 
-  @Prop({ required: true })
-  @Field()
-  displayName: string;
+  @Prop()
+  @Field({ nullable: true })
+  displayName?: string;
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true, unique: true, lowercase: true })
   @Field()
   username: string;
 

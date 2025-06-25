@@ -2,12 +2,14 @@ import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 
+import { JwtPayload } from "@/common/interfaces/jwt-payload.interface";
+import { Types } from "mongoose";
 import { SessionsService } from "../sessions/sessions.service";
-import { AuthPayload } from "../users/dto/auth-payload.dto";
-import { CreateUserInput } from "../users/dto/create-user.input";
-import { LoginInput } from "../users/dto/login.input";
 import { User } from "../users/schemas/user.schema";
 import { UsersService } from "../users/users.service";
+import { AuthPayload } from "./dto/auth-payload.dto";
+import { LoginInput } from "./dto/login.input";
+import { RegisterUserInput } from "./dto/register-user.input";
 
 @Injectable()
 export class AuthService {
@@ -19,10 +21,15 @@ export class AuthService {
   ) {}
 
   async register(
-    createUserInput: CreateUserInput,
+    registerUserInput: RegisterUserInput,
     sessionInfo?: any
   ): Promise<AuthPayload> {
-    const user = await this.usersService.create(createUserInput);
+    const user = await this.usersService.create(
+      registerUserInput.email,
+      registerUserInput.password,
+      registerUserInput.username,
+      registerUserInput.displayName
+    );
 
     console.log(
       `Email verification code for ${user.email}: ${user.emailVerificationCode}`
@@ -86,16 +93,6 @@ export class AuthService {
     };
   }
 
-  async logout(refreshToken: string): Promise<boolean> {
-    await this.sessionsService.deactivateSession(refreshToken);
-    return true;
-  }
-
-  async logoutAllSessions(userId: string): Promise<boolean> {
-    await this.sessionsService.deactivateAllUserSessions(userId);
-    return true;
-  }
-
   async verifyEmail(code: string): Promise<boolean> {
     return this.usersService.verifyEmail(code);
   }
@@ -123,11 +120,15 @@ export class AuthService {
   private async generateTokens(
     user: User,
     sessionInfo?: any
-  ): Promise<{ accessToken: string; refreshToken: string }> {
-    const payload = {
+  ): Promise<{ accessToken: string; refreshToken: string; sessionId: string }> {
+    const _id = new Types.ObjectId();
+    const sessionId = _id.toString();
+
+    const payload: JwtPayload = {
       sub: user._id.toString(),
-      email: user.email,
+      emailVerified: user.isEmailVerified,
       username: user.username,
+      sessionId,
     };
 
     const accessToken = this.jwtService.sign(payload, {
@@ -142,6 +143,7 @@ export class AuthService {
 
     // Create session record
     await this.sessionsService.createSession({
+      _id,
       refreshToken,
       userId: user._id.toString(),
       country: sessionInfo?.country,
@@ -149,6 +151,6 @@ export class AuthService {
       os: sessionInfo?.os,
     });
 
-    return { accessToken, refreshToken };
+    return { accessToken, refreshToken, sessionId };
   }
 }

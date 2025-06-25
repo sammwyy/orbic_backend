@@ -1,9 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
+import { Model, Types } from "mongoose";
 import { Session, SessionDocument } from "./schemas/session.schema";
 
 export interface CreateSessionData {
+  _id?: Types.ObjectId;
   refreshToken: string;
   userId: string;
   country?: string;
@@ -49,16 +50,14 @@ export class SessionsService {
       .sort({ createdAt: -1 });
   }
 
-  async deactivateSession(refreshToken: string): Promise<void> {
-    await this.sessionModel.findOneAndUpdate(
-      { refreshToken },
-      {
-        $set: {
-          isActive: false,
-          updatedAt: new Date(),
-        },
-      }
-    );
+  async deactivateSession(id: string): Promise<boolean> {
+    const result = await this.sessionModel.findByIdAndUpdate(id, {
+      $set: {
+        isActive: false,
+        updatedAt: new Date(),
+      },
+    });
+    return result != null;
   }
 
   async deactivateAllUserSessions(userId: string): Promise<void> {

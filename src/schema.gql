@@ -5,7 +5,16 @@
 type AuthPayload {
   accessToken: String!
   refreshToken: String!
+  sessionId: String!
   user: User!
+}
+
+type CategoryStats {
+  category: CourseCategory!
+  coursesCompleted: Int!
+  levelsCompleted: Int!
+  totalScore: Int!
+  totalStars: Int!
 }
 
 type Chapter {
@@ -17,6 +26,17 @@ type Chapter {
   order: Float!
   title: String!
   updatedAt: DateTime!
+}
+
+type ChapterProgressDto {
+  chapterId: String!
+  completedLevels: Int!
+  isCompleted: Boolean!
+  isLocked: Boolean!
+  maxPossibleStars: Int!
+  title: String!
+  totalLevels: Int!
+  totalStars: Int!
 }
 
 input CompleteFileDto {
@@ -86,6 +106,19 @@ type CourseProgress {
   userId: String!
 }
 
+type CourseProgressDto {
+  chapterProgress: [ChapterProgressDto!]!
+  completedChapters: Int!
+  completedLevels: Int!
+  completionPercentage: Int!
+  courseId: String!
+  isCompleted: Boolean!
+  maxPossibleStars: Int!
+  totalChapters: Int!
+  totalLevels: Int!
+  totalStars: Int!
+}
+
 """Course visibility options"""
 enum CourseVisibility {
   LINK_ONLY
@@ -133,13 +166,6 @@ input CreateLevelInput {
   title: String!
 }
 
-input CreateUserInput {
-  displayName: String!
-  email: String!
-  password: String!
-  username: String!
-}
-
 """
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
@@ -164,6 +190,32 @@ type FreeChoiceQuestion {
   acceptedAnswers: [String!]!
   question: String!
   type: QuestionType!
+}
+
+type GameSession {
+  _id: ID!
+  chapterId: String!
+  courseId: String!
+  createdAt: DateTime!
+  currentQuestionIndex: Int!
+  endTime: DateTime
+  levelId: String!
+  lives: Int!
+  maxScore: Int!
+  score: Int!
+  stars: Int!
+  startTime: DateTime!
+  status: GameSessionStatus!
+  updatedAt: DateTime!
+  userId: String!
+}
+
+"""Game session status options"""
+enum GameSessionStatus {
+  ABANDONED
+  ACTIVE
+  COMPLETED
+  EXPIRED
 }
 
 input GenerateCourseFromFileInput {
@@ -201,6 +253,30 @@ type Level {
   updatedAt: DateTime!
 }
 
+type LevelAttempt {
+  completedAt: DateTime!
+  score: Int!
+  sessionId: String!
+  stars: Int!
+  timeSpent: Int!
+}
+
+type LevelCompletionDto {
+  chapterId: String!
+  correctAnswers: Int!
+  courseId: String!
+  isChapterCompleted: Boolean!
+  isCourseCompleted: Boolean!
+  isNewHighScore: Boolean!
+  levelId: String!
+  maxScore: Int!
+  nextLevelId: String!
+  score: Int!
+  stars: Int!
+  timeSpent: Int!
+  totalQuestions: Int!
+}
+
 type LevelProgress {
   attempts: Int!
   completed: Boolean!
@@ -208,6 +284,16 @@ type LevelProgress {
   levelId: String!
   maxScore: Int!
   score: Int!
+}
+
+type LevelProgressDto {
+  attempts: Int!
+  bestScore: Int!
+  bestStars: Int!
+  isCompleted: Boolean!
+  levelId: String!
+  recentAttempts: [LevelAttempt!]!
+  totalTimeSpent: Int!
 }
 
 input LoginInput {
@@ -232,6 +318,7 @@ type MultipleChoiceQuestion {
 }
 
 type Mutation {
+  abandonSession(sessionId: String!): Boolean!
   completeFile(payload: CompleteFileDto!): File!
   createChapter(input: CreateChapterInput!): Chapter!
   createCourse(input: CreateCourseInput!): Course!
@@ -245,14 +332,17 @@ type Mutation {
   generateCourseFromText(input: GenerateCourseFromTextInput!): String!
   initializeCourseProgress(courseId: ID!): CourseProgress!
   login(input: LoginInput!): AuthPayload!
-  logout(refreshToken: String!): Boolean!
-  logoutAllSessions(userId: String!): Boolean!
+  logout: Boolean!
+  logoutAllSessions: Boolean!
   refreshToken(refreshToken: String!): AuthPayload!
-  register(input: CreateUserInput!): AuthPayload!
+  register(input: RegisterUserInput!): AuthPayload!
   reorderChapters(chapterIds: [ID!]!, courseId: ID!): [Chapter!]!
   reorderLevels(chapterId: ID!, levelIds: [ID!]!): [Level!]!
   requestPasswordReset(email: String!): Boolean!
   resetPassword(code: String!, newPassword: String!): Boolean!
+  skipQuestion(sessionId: String!): QuestionResultDto!
+  startLevel(input: StartGameSessionInput!): GameSession!
+  submitAnswer(input: SubmitAnswerInput!): QuestionResultDto!
   updateChapter(id: ID!, input: UpdateChapterInput!): Chapter!
   updateCourse(id: ID!, input: UpdateCourseInput!): Course!
   updateCourseVisibility(id: ID!, visibility: CourseVisibility!): Course!
@@ -282,17 +372,22 @@ type Query {
   chapterLevels(chapterId: ID!): [Level!]!
   course(id: ID!): Course
   courseChapters(courseId: ID!): [Chapter!]!
+  courseGameProgress(courseId: ID!): CourseProgressDto!
   courseProgress(courseId: ID!): CourseProgress
   courses(filter: CourseFilterInput, limit: Int = 20, offset: Int = 0): CoursesConnection!
+  currentGameSession: GameSession
   getCourseGenerationStatus(jobId: String!): CourseGenerationStatus!
   getFileById(id: String!): File!
   getUserFiles: [File!]!
   getUserStorageStats: UserStorageStats!
   level(id: ID!): Level
+  levelCompletion(sessionId: ID!): LevelCompletionDto!
+  levelProgress(levelId: ID!): LevelProgressDto!
   me: User!
   myCompletedCourses: [CourseProgress!]!
   myCourses(limit: Int = 20, offset: Int = 0): CoursesConnection!
   myPlayingCourses: [CourseProgress!]!
+  myStats: UserStatsDto!
   previewGeneratedCourse(jobId: String!): GeneratedCoursePreview!
   publicCourses(limit: Int = 20, offset: Int = 0): CoursesConnection!
 }
@@ -309,6 +404,14 @@ input QuestionInput {
   type: QuestionType!
 }
 
+type QuestionResultDto {
+  correctAnswer: [String!]!
+  isCorrect: Boolean!
+  isLastQuestion: Boolean!
+  livesRemaining: Int!
+  nextQuestionIndex: Int
+}
+
 """Available question types"""
 enum QuestionType {
   FREE_CHOICE
@@ -318,10 +421,32 @@ enum QuestionType {
   TRUE_FALSE
 }
 
+input RegisterUserInput {
+  displayName: String!
+  email: String!
+  password: String!
+  username: String!
+}
+
 type SequenceQuestion {
   correctSequence: [String!]!
   question: String!
   type: QuestionType!
+}
+
+input StartGameSessionInput {
+  levelId: String!
+}
+
+input SubmitAnswerInput {
+  booleanAnswer: Boolean
+  freeAnswer: String
+  pairMatches: [String!]
+  questionIndex: Float!
+  selectedOptionIndex: Float
+  sequenceOrder: [String!]
+  sessionId: String!
+  timeSpent: Float!
 }
 
 type TrueFalseQuestion {
@@ -361,11 +486,23 @@ type User {
   _id: ID!
   avatarId: String
   createdAt: DateTime!
-  displayName: String!
+  displayName: String
   email: String!
   isEmailVerified: Boolean!
   updatedAt: DateTime!
   username: String!
+}
+
+type UserStatsDto {
+  categoriesStats: [CategoryStats!]!
+  currentStreak: Int!
+  longestStreak: Int!
+  totalCoursesCompleted: Int!
+  totalLevelsCompleted: Int!
+  totalLivesLost: Int!
+  totalScore: Int!
+  totalStarsEarned: Int!
+  totalTimeSpent: Int!
 }
 
 type UserStorageStats {

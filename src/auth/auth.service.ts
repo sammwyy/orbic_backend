@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 
@@ -49,7 +53,7 @@ export class AuthService {
     const user = await this.usersService.findByEmailOrUsername(emailOrUsername);
 
     if (!user) {
-      throw new UnauthorizedException("Invalid credentials");
+      throw new BadRequestException("Invalid credentials");
     }
 
     const isPasswordValid = await this.usersService.validatePassword(
@@ -58,7 +62,7 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException("Invalid credentials");
+      throw new BadRequestException("Invalid credentials");
     }
 
     const tokens = await this.generateTokens(user, sessionInfo);

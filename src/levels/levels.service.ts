@@ -3,11 +3,13 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 
 import { validateQuestions } from "@/common/utils/question.utils";
+import { CourseVisibility } from "@/courses/schemas/course.schema";
 import { ChaptersService } from "../chapters/chapters.service";
 import { CoursesService } from "../courses/courses.service";
 import { CreateLevelInput } from "./dto/create-level.input";
@@ -138,10 +140,26 @@ export class LevelsService {
     chapterId: string,
     userId?: string
   ): Promise<Level[]> {
-    // Todo: Verify access to the chapter
     const chapter = await this.chaptersService.findById(chapterId, userId);
+    const course = await this.coursesService.findById(chapter.courseId);
+
+    if (
+      userId !== undefined &&
+      course.visibility == CourseVisibility.PRIVATE &&
+      course.author !== userId
+    ) {
+      throw new UnauthorizedException("Don't have access to this course");
+    }
 
     return this.levelModel.find({ chapterId }).sort({ order: 1 }).exec();
+  }
+
+  async findCourseLevels(courseId: string, userId?: string) {
+    const course = await this.coursesService.findById(courseId, userId);
+    return this.levelModel
+      .find({ courseId: course._id })
+      .sort({ order: 1 })
+      .exec();
   }
 
   async reorderLevels(

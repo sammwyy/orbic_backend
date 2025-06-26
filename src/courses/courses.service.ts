@@ -257,7 +257,7 @@ export class CoursesService {
 
   private canAccessCourse(course: Course, userId?: string): boolean {
     // Author can always access their course
-    if (userId && course.author === userId) {
+    if (userId && course.author == userId) {
       return true;
     }
 

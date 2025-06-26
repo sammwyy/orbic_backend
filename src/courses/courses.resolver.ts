@@ -11,11 +11,11 @@ import { UpdateCourseInput } from "./dto/update-course.input";
 import { Course, CourseVisibility } from "./schemas/course.schema";
 
 @Resolver(() => Course)
+@UseGuards(GqlAuthGuard)
 export class CoursesResolver {
   constructor(private readonly coursesService: CoursesService) {}
 
   @Mutation(() => Course)
-  @UseGuards(GqlAuthGuard)
   async createCourse(
     @Args("input") createCourseInput: CreateCourseInput,
     @CurrentUser() user: JwtPayload
@@ -24,7 +24,6 @@ export class CoursesResolver {
   }
 
   @Mutation(() => Course)
-  @UseGuards(GqlAuthGuard)
   async updateCourse(
     @Args("id", { type: () => ID }) id: string,
     @Args("input") updateCourseInput: UpdateCourseInput,
@@ -34,7 +33,6 @@ export class CoursesResolver {
   }
 
   @Mutation(() => Course)
-  @UseGuards(GqlAuthGuard)
   async updateCourseVisibility(
     @Args("id", { type: () => ID }) id: string,
     @Args("visibility", { type: () => CourseVisibility })
@@ -45,7 +43,6 @@ export class CoursesResolver {
   }
 
   @Mutation(() => Boolean)
-  @UseGuards(GqlAuthGuard)
   async deleteCourse(
     @Args("id", { type: () => ID }) id: string,
     @CurrentUser() user: JwtPayload
@@ -74,7 +71,6 @@ export class CoursesResolver {
   }
 
   @Query(() => CoursesConnection)
-  @UseGuards(GqlAuthGuard)
   async myCourses(
     @Args("limit", { type: () => Int, nullable: true, defaultValue: 20 })
     limit?: number,

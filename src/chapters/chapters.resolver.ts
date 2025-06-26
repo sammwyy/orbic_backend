@@ -9,11 +9,11 @@ import { UpdateChapterInput } from "./dto/update-chapter.input";
 import { Chapter } from "./schemas/chapter.schema";
 
 @Resolver(() => Chapter)
+@UseGuards(GqlAuthGuard)
 export class ChaptersResolver {
   constructor(private readonly chaptersService: ChaptersService) {}
 
   @Mutation(() => Chapter)
-  @UseGuards(GqlAuthGuard)
   async createChapter(
     @Args("input") createChapterInput: CreateChapterInput,
     @CurrentUser() user: JwtPayload
@@ -22,7 +22,6 @@ export class ChaptersResolver {
   }
 
   @Mutation(() => Chapter)
-  @UseGuards(GqlAuthGuard)
   async updateChapter(
     @Args("id", { type: () => ID }) id: string,
     @Args("input") updateChapterInput: UpdateChapterInput,
@@ -32,7 +31,6 @@ export class ChaptersResolver {
   }
 
   @Mutation(() => Boolean)
-  @UseGuards(GqlAuthGuard)
   async deleteChapter(
     @Args("id", { type: () => ID }) id: string,
     @CurrentUser() user: JwtPayload
@@ -41,7 +39,6 @@ export class ChaptersResolver {
   }
 
   @Mutation(() => [Chapter])
-  @UseGuards(GqlAuthGuard)
   async reorderChapters(
     @Args("courseId", { type: () => ID }) courseId: string,
     @Args("chapterIds", { type: () => [ID] }) chapterIds: string[],
@@ -53,9 +50,9 @@ export class ChaptersResolver {
   @Query(() => Chapter, { nullable: true })
   async chapter(
     @Args("id", { type: () => ID }) id: string,
-    @CurrentUser() user?: JwtPayload
+    @CurrentUser() user: JwtPayload
   ): Promise<Chapter> {
-    return this.chaptersService.findById(id, user?.sub);
+    return this.chaptersService.findById(id, user.sub);
   }
 
   @Query(() => [Chapter])

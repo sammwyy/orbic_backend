@@ -10,11 +10,11 @@ import { LevelsService } from "./levels.service";
 import { Level } from "./schemas/level.schema";
 
 @Resolver(() => Level)
+@UseGuards(GqlAuthGuard)
 export class LevelsResolver {
   constructor(private readonly levelsService: LevelsService) {}
 
   @Mutation(() => Level)
-  @UseGuards(GqlAuthGuard)
   async createLevel(
     @Args("input") createLevelInput: CreateLevelInput,
     @CurrentUser() user: JwtPayload
@@ -23,7 +23,6 @@ export class LevelsResolver {
   }
 
   @Mutation(() => Level)
-  @UseGuards(GqlAuthGuard)
   async updateLevel(
     @Args("id", { type: () => ID }) id: string,
     @Args("input") updateLevelInput: UpdateLevelInput,
@@ -33,7 +32,6 @@ export class LevelsResolver {
   }
 
   @Mutation(() => Boolean)
-  @UseGuards(GqlAuthGuard)
   async deleteLevel(
     @Args("id", { type: () => ID }) id: string,
     @CurrentUser() user: JwtPayload
@@ -42,7 +40,6 @@ export class LevelsResolver {
   }
 
   @Mutation(() => [Level])
-  @UseGuards(GqlAuthGuard)
   async reorderLevels(
     @Args("chapterId", { type: () => ID }) chapterId: string,
     @Args("levelIds", { type: () => [ID] }) levelIds: string[],
@@ -65,5 +62,13 @@ export class LevelsResolver {
     @CurrentUser() user?: JwtPayload
   ): Promise<Level[]> {
     return this.levelsService.findChapterLevels(chapterId, user?.sub);
+  }
+
+  @Query(() => [Level])
+  async courseLevels(
+    @Args("courseId", { type: () => ID }) courseId: string,
+    @CurrentUser() user?: JwtPayload
+  ): Promise<Level[]> {
+    return this.levelsService.findCourseLevels(courseId, user?.sub);
   }
 }

@@ -373,6 +373,7 @@ type Query {
   course(id: ID!): Course
   courseChapters(courseId: ID!): [Chapter!]!
   courseGameProgress(courseId: ID!): CourseProgressDto!
+  courseLevels(courseId: ID!): [Level!]!
   courseProgress(courseId: ID!): CourseProgress
   courses(filter: CourseFilterInput, limit: Int = 20, offset: Int = 0): CoursesConnection!
   currentGameSession: GameSession

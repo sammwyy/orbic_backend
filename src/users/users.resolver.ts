@@ -12,9 +12,9 @@ import { UsersService } from "./users.service";
 export class UsersResolver {
   constructor(private readonly usersService: UsersService) {}
 
-  @Query(() => User, { name: "me" })
+  @Query(() => User)
   @UseGuards(GqlAuthGuard)
-  async getMe(@CurrentUser() user: JwtPayload): Promise<User> {
+  async me(@CurrentUser() user: JwtPayload): Promise<User> {
     return this.usersService.findById(user.sub);
   }
 

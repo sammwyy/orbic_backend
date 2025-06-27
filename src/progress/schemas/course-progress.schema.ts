@@ -13,13 +13,46 @@ export class LevelProgress {
   completed: boolean;
 
   @Field(() => Int)
-  score: number;
+  bestScore: number;
 
   @Field(() => Int)
-  maxScore: number;
+  bestStars: number;
 
   @Field(() => Int)
   attempts: number;
+
+  @Field(() => Int)
+  totalTimeSpent: number; // in seconds
+
+  @Field()
+  firstCompletedAt?: Date;
+
+  @Field()
+  lastCompletedAt?: Date;
+}
+
+@ObjectType()
+export class ChapterProgress {
+  @Field(() => String)
+  chapterId: string;
+
+  @Field(() => Int)
+  completedLevels: number;
+
+  @Field(() => Int)
+  totalLevels: number;
+
+  @Field(() => Int)
+  totalStars: number;
+
+  @Field(() => Int)
+  maxPossibleStars: number;
+
+  @Field()
+  isCompleted: boolean;
+
+  @Field()
+  isUnlocked: boolean;
 
   @Field()
   completedAt?: Date;
@@ -39,17 +72,13 @@ export class CourseProgress {
   @Field(() => String)
   courseId: string;
 
-  @Prop({ default: 0 })
-  @Field(() => Int)
-  currentChapter: number;
-
-  @Prop({ default: 0 })
-  @Field(() => Int)
-  currentLevel: number;
-
   @Prop({ type: Array, default: [] })
   @Field(() => [LevelProgress])
   levelProgress: LevelProgress[];
+
+  @Prop({ type: Array, default: [] })
+  @Field(() => [ChapterProgress])
+  chapterProgress: ChapterProgress[];
 
   @Prop({ default: 0 })
   @Field(() => Int)
@@ -57,11 +86,35 @@ export class CourseProgress {
 
   @Prop({ default: 0 })
   @Field(() => Int)
-  totalMaxScore: number;
+  totalStars: number;
+
+  @Prop({ default: 0 })
+  @Field(() => Int)
+  totalTimeSpent: number;
+
+  @Prop({ default: 0 })
+  @Field(() => Int)
+  completedLevels: number;
+
+  @Prop({ default: 0 })
+  @Field(() => Int)
+  totalLevels: number;
+
+  @Prop({ default: 0 })
+  @Field(() => Int)
+  completedChapters: number;
+
+  @Prop({ default: 0 })
+  @Field(() => Int)
+  totalChapters: number;
 
   @Prop({ default: false })
   @Field()
-  completed: boolean;
+  isCompleted: boolean;
+
+  @Prop()
+  @Field({ nullable: true })
+  completedAt?: Date;
 
   @Field()
   createdAt: Date;

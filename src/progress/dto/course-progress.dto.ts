@@ -24,7 +24,7 @@ export class ChapterProgressDto {
   isCompleted: boolean;
 
   @Field()
-  isLocked: boolean;
+  isUnlocked: boolean;
 }
 
 @ObjectType()

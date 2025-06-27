@@ -2,7 +2,7 @@ import { Field, Int, ObjectType } from "@nestjs/graphql";
 import { CourseCategory } from "../../courses/schemas/course.schema";
 
 @ObjectType()
-export class CategoryStats {
+export class CategoryStatsDto {
   @Field(() => CourseCategory)
   category: CourseCategory;
 
@@ -45,6 +45,6 @@ export class UserStatsDto {
   @Field(() => Int)
   longestStreak: number;
 
-  @Field(() => [CategoryStats])
-  categoriesStats: CategoryStats[];
+  @Field(() => [CategoryStatsDto])
+  categoriesStats: CategoryStatsDto[];
 }

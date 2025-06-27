@@ -3,7 +3,6 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 
 import { CoursesService } from "../courses/courses.service";
-import { UserStatsDto } from "./dto/user-stats.dto";
 import { UserStats, UserStatsDocument } from "./schemas/user-stats.schema";
 
 @Injectable()
@@ -14,7 +13,7 @@ export class StatsService {
     private coursesService: CoursesService
   ) {}
 
-  async getUserStats(userId: string): Promise<UserStatsDto> {
+  async getUserStats(userId: string): Promise<UserStats> {
     let userStats: UserStatsDocument = await this.userStatsModel
       .findOne({ userId })
       .exec();
@@ -23,23 +22,7 @@ export class StatsService {
       userStats = await this.initializeUserStats(userId);
     }
 
-    return {
-      totalCoursesCompleted: userStats.totalCoursesCompleted,
-      totalLevelsCompleted: userStats.totalLevelsCompleted,
-      totalTimeSpent: userStats.totalTimeSpent,
-      totalLivesLost: userStats.totalLivesLost,
-      totalStarsEarned: userStats.totalStarsEarned,
-      totalScore: userStats.totalScore,
-      currentStreak: userStats.currentStreak,
-      longestStreak: userStats.longestStreak,
-      categoriesStats: userStats.categoryStats.map((cs) => ({
-        category: cs.category,
-        coursesCompleted: cs.coursesCompleted,
-        levelsCompleted: cs.levelsCompleted,
-        totalStars: cs.totalStars,
-        totalScore: cs.totalScore,
-      })),
-    };
+    return userStats;
   }
 
   async updateUserStats(

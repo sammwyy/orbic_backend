@@ -14,6 +14,7 @@ import { UsersService } from "../users/users.service";
 import { AuthPayload } from "./dto/auth-payload.dto";
 import { LoginInput } from "./dto/login.input";
 import { RegisterUserInput } from "./dto/register-user.input";
+import { SessionsModule } from "@/sessions/sessions.module";
 
 @Injectable()
 export class AuthService {
@@ -39,7 +40,7 @@ export class AuthService {
       `Email verification code for ${user.email}: ${user.emailVerificationCode}`
     );
 
-    const tokens = await this.generateTokens(user, sessionInfo);
+    const tokens = await this.createSession(user, sessionInfo);
 
     return {
       user,
@@ -65,7 +66,7 @@ export class AuthService {
       throw new BadRequestException("Invalid credentials");
     }
 
-    const tokens = await this.generateTokens(user, sessionInfo);
+    const tokens = await this.createSession(user, sessionInfo);
 
     return {
       user,
@@ -73,10 +74,7 @@ export class AuthService {
     };
   }
 
-  async refreshToken(
-    refreshToken: string,
-    sessionInfo?: any
-  ): Promise<AuthPayload> {
+  async refreshToken(refreshToken: string): Promise<AuthPayload> {
     const session = await this.sessionsService.findActiveSession(refreshToken);
 
     if (!session) {
@@ -85,11 +83,10 @@ export class AuthService {
 
     const user = await this.usersService.findById(session.userId);
 
-    // Deactivate old session
-    await this.sessionsService.deactivateSession(refreshToken);
-
     // Generate new tokens and create new session
-    const tokens = await this.generateTokens(user, sessionInfo);
+    const tokens = this.generateTokens(user, session._id.toString());
+    session.refreshToken = tokens.refreshToken;
+    await session.save();
 
     return {
       user,
@@ -121,13 +118,7 @@ export class AuthService {
     return result;
   }
 
-  private async generateTokens(
-    user: User,
-    sessionInfo?: any
-  ): Promise<{ accessToken: string; refreshToken: string; sessionId: string }> {
-    const _id = new Types.ObjectId();
-    const sessionId = _id.toString();
-
+  private generateTokens(user: User, sessionId: string) {
     const payload: JwtPayload = {
       sub: user._id.toString(),
       emailVerified: user.isEmailVerified,
@@ -144,6 +135,18 @@ export class AuthService {
       secret: this.configService.get("JWT_REFRESH_SECRET"),
       expiresIn: this.configService.get("JWT_REFRESH_EXPIRES_IN"),
     });
+
+    return { accessToken, refreshToken, sessionId };
+  }
+
+  private async createSession(
+    user: User,
+    sessionInfo?: any
+  ): Promise<{ accessToken: string; refreshToken: string; sessionId: string }> {
+    const _id = new Types.ObjectId();
+    const sessionId = _id.toString();
+
+    const { accessToken, refreshToken } = this.generateTokens(user, sessionId);
 
     // Create session record
     await this.sessionsService.createSession({

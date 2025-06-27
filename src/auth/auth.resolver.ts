@@ -29,11 +29,9 @@ export class AuthResolver {
 
   @Mutation(() => AuthPayload)
   async refreshToken(
-    @Args("refreshToken") refreshToken: string,
-    @Context() context: any
+    @Args("refreshToken") refreshToken: string
   ): Promise<AuthPayload> {
-    const sessionInfo = this.extractSessionInfo(context);
-    return this.authService.refreshToken(refreshToken, sessionInfo);
+    return this.authService.refreshToken(refreshToken);
   }
 
   @Mutation(() => Boolean)

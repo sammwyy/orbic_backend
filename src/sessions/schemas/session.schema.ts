@@ -1,14 +1,19 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Field, ID } from "@nestjs/graphql";
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Types } from "mongoose";
+import { Document } from "mongoose";
 
 export type SessionDocument = Session & Document;
 
 @Schema({ timestamps: true })
 export class Session {
+  @Field(() => ID)
+  _id: Types.ObjectId;
+
   @Prop({ required: true })
   refreshToken: string;
 
-  @Prop({ type: String, ref: 'User', required: true })
+  @Prop({ type: String, ref: "User", required: true })
   userId: string;
 
   @Prop({ default: Date.now })

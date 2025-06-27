@@ -26,7 +26,9 @@ export class SessionsService {
     return session.save();
   }
 
-  async findActiveSession(refreshToken: string): Promise<Session | null> {
+  async findActiveSession(
+    refreshToken: string
+  ): Promise<SessionDocument | null> {
     return this.sessionModel.findOne({
       refreshToken,
       isActive: true,

@@ -156,10 +156,16 @@ export class LevelsService {
 
   async findCourseLevels(courseId: string, userId?: string) {
     const course = await this.coursesService.findById(courseId, userId);
-    return this.levelModel
-      .find({ courseId: course._id })
-      .sort({ order: 1 })
-      .exec();
+
+    if (
+      userId !== undefined &&
+      course.visibility == CourseVisibility.PRIVATE &&
+      course.author !== userId
+    ) {
+      throw new UnauthorizedException("Don't have access to this course");
+    }
+
+    return this.levelModel.find({ courseId }).sort({ order: 1 }).exec();
   }
 
   async reorderLevels(
@@ -167,7 +173,6 @@ export class LevelsService {
     levelIds: string[],
     userId: string
   ): Promise<Level[]> {
-    // Todo: Verify chapter and course ownership
     const chapter = await this.chaptersService.findById(chapterId, userId);
     const course = await this.coursesService.findById(chapter.courseId, userId);
     if (course.author !== userId) {

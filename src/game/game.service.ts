@@ -329,11 +329,11 @@ export class GameService {
     }
 
     // Check if course is completed
-    const courseProgress = await this.progressService.getCourseProgressDto(
+    const courseProgress = await this.progressService.getCourseProgress(
       level.courseId,
       userId
     );
-    const isCourseCompleted = courseProgress.isCompleted;
+    const isCourseCompleted = courseProgress?.isCompleted || false;
 
     // Check if this is a new high score
     const previousSessions = await this.gameSessionModel

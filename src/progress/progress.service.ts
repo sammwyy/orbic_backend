@@ -5,8 +5,6 @@ import { Model } from "mongoose";
 import { ChaptersService } from "../chapters/chapters.service";
 import { CoursesService } from "../courses/courses.service";
 import { LevelsService } from "../levels/levels.service";
-import { CourseProgressDto } from "./dto/course-progress.dto";
-import { LevelProgressDto } from "./dto/level-progress.dto";
 import {
   CourseProgress,
   CourseProgressDocument,
@@ -128,119 +126,6 @@ export class ProgressService {
     return {
       progress,
       isCourseCompleted: courseProgressData.isCompleted,
-    };
-  }
-
-  async getLevelProgress(
-    levelId: string,
-    userId: string
-  ): Promise<LevelProgressDto> {
-    const level = await this.levelsService.findById(levelId, userId);
-    const progress = await this.getCourseProgress(level.courseId, userId);
-
-    if (!progress) {
-      return {
-        levelId,
-        isCompleted: false,
-        bestScore: 0,
-        bestStars: 0,
-        attempts: 0,
-        totalTimeSpent: 0,
-        recentAttempts: [],
-      };
-    }
-
-    const levelProgress = progress.levelProgress.find(
-      (lp) => lp.levelId === levelId
-    );
-
-    if (!levelProgress) {
-      return {
-        levelId,
-        isCompleted: false,
-        bestScore: 0,
-        bestStars: 0,
-        attempts: 0,
-        totalTimeSpent: 0,
-        recentAttempts: [],
-      };
-    }
-
-    return {
-      levelId,
-      isCompleted: levelProgress.completed,
-      bestScore: levelProgress.bestScore,
-      bestStars: levelProgress.bestStars,
-      attempts: levelProgress.attempts,
-      totalTimeSpent: levelProgress.totalTimeSpent,
-      recentAttempts: [], // TODO: Implement recent attempts from game sessions
-    };
-  }
-
-  async getCourseProgressDto(
-    courseId: string,
-    userId: string
-  ): Promise<CourseProgressDto> {
-    const course = await this.coursesService.findById(courseId, userId);
-    const chapters = await this.chaptersService.findCourseChapters(
-      courseId,
-      userId
-    );
-
-    let progress = await this.getCourseProgress(courseId, userId);
-    if (!progress) {
-      progress = await this.initializeCourseProgress(courseId, userId);
-    }
-
-    const chapterProgressDtos = await Promise.all(
-      chapters.map(async (chapter) => {
-        const levels = await this.levelsService.findChapterLevels(
-          chapter._id.toString(),
-          userId
-        );
-
-        const completedLevelsInChapter = progress.levelProgress.filter(
-          (lp) =>
-            lp.completed &&
-            levels.some((level) => level._id.toString() === lp.levelId)
-        ).length;
-
-        const totalStarsInChapter = progress.levelProgress
-          .filter((lp) =>
-            levels.some((level) => level._id.toString() === lp.levelId)
-          )
-          .reduce((sum, lp) => sum + lp.bestStars, 0);
-
-        const maxPossibleStars = levels.length * 3;
-
-        return {
-          chapterId: chapter._id.toString(),
-          title: chapter.title,
-          completedLevels: completedLevelsInChapter,
-          totalLevels: levels.length,
-          totalStars: totalStarsInChapter,
-          maxPossibleStars,
-          isCompleted:
-            completedLevelsInChapter === levels.length && levels.length > 0,
-          isUnlocked: true, // TODO: Implement chapter unlocking logic
-        };
-      })
-    );
-
-    return {
-      courseId,
-      completedLevels: progress.completedLevels,
-      totalLevels: progress.totalLevels,
-      totalStars: progress.totalStars,
-      maxPossibleStars: progress.totalLevels * 3,
-      completedChapters: progress.completedChapters,
-      totalChapters: progress.totalChapters,
-      isCompleted: progress.isCompleted,
-      completionPercentage:
-        progress.totalLevels > 0
-          ? Math.round((progress.completedLevels / progress.totalLevels) * 100)
-          : 0,
-      chapterProgress: chapterProgressDtos,
     };
   }
 

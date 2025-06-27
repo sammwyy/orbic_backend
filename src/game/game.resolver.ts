@@ -32,14 +32,6 @@ export class GameResolver {
     return this.gameService.submitAnswer(input, user.sub);
   }
 
-  @Mutation(() => QuestionResultDto)
-  async skipQuestion(
-    @Args("sessionId") sessionId: string,
-    @CurrentUser() user: JwtPayload
-  ): Promise<QuestionResultDto> {
-    return this.gameService.skipQuestion(sessionId, user.sub);
-  }
-
   @Mutation(() => Boolean)
   async abandonSession(
     @Args("sessionId") sessionId: string,

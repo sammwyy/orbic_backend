@@ -49,10 +49,6 @@ export class GameSession {
   @Field(() => Int)
   lives: number;
 
-  @Prop({ default: 0 })
-  @Field(() => Int)
-  currentQuestionIndex: number;
-
   @Prop({ type: Array, default: [] })
   answeredQuestions: AnsweredQuestion[];
 

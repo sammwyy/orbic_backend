@@ -77,7 +77,6 @@ export class GameService {
       courseId: level.courseId,
       chapterId: level.chapterId,
       lives: 3,
-      currentQuestionIndex: 0,
       answeredQuestions: [],
       startTime: new Date(),
       status: GameSessionStatus.ACTIVE,
@@ -116,14 +115,19 @@ export class GameService {
       throw new BadRequestException("Game session is not active");
     }
 
-    if (input.questionIndex !== session.currentQuestionIndex) {
-      throw new BadRequestException("Invalid question index");
-    }
-
     const level = await this.levelsService.findById(session.levelId, userId);
 
     if (input.questionIndex >= level.questions.length) {
       throw new BadRequestException("Question index out of bounds");
+    }
+
+    // Check if this question was already answered
+    const alreadyAnswered = session.answeredQuestions.some(
+      (aq) => aq.questionIndex === input.questionIndex
+    );
+
+    if (alreadyAnswered) {
+      throw new BadRequestException("Question already answered");
     }
 
     const question = level.questions[input.questionIndex];
@@ -154,8 +158,11 @@ export class GameService {
       timeSpent: input.timeSpent,
     };
 
-    const isLastQuestion = input.questionIndex === level.questions.length - 1;
-    const nextQuestionIndex = isLastQuestion ? null : input.questionIndex + 1;
+    // Check if this is the last question based on answered questions count
+    const totalAnsweredAfterThis = session.answeredQuestions.length + 1;
+    const isLastQuestion = totalAnsweredAfterThis >= level.questions.length;
+    
+    // Session is completed if all questions answered or no lives left
     const isCompleted = isLastQuestion || livesRemaining === 0;
 
     // Calculate score
@@ -173,9 +180,6 @@ export class GameService {
       updateData.status = GameSessionStatus.COMPLETED;
       updateData.endTime = now;
       updateData.stars = stars;
-      updateData.currentQuestionIndex = level.questions.length;
-    } else {
-      updateData.currentQuestionIndex = nextQuestionIndex;
     }
 
     await this.gameSessionModel.findByIdAndUpdate(session._id, updateData);
@@ -191,79 +195,7 @@ export class GameService {
       livesRemaining,
       correctAnswer,
       isLastQuestion,
-      nextQuestionIndex:
-        nextQuestionIndex !== null ? nextQuestionIndex : undefined,
-    };
-  }
-
-  async skipQuestion(
-    sessionId: string,
-    userId: string
-  ): Promise<QuestionResultDto> {
-    const session = await this.gameSessionModel.findOne({
-      _id: sessionId,
-      userId,
-    });
-
-    if (!session) {
-      throw new NotFoundException("Game session not found");
-    }
-
-    if (session.status !== GameSessionStatus.ACTIVE) {
-      throw new BadRequestException("Game session is not active");
-    }
-
-    const level = await this.levelsService.findById(session.levelId, userId);
-    const questionIndex = session.currentQuestionIndex;
-
-    if (questionIndex >= level.questions.length) {
-      throw new BadRequestException("Question index out of bounds");
-    }
-
-    const question = level.questions[questionIndex];
-    const livesRemaining = Math.max(0, session.lives - 1);
-
-    const answeredQuestion = {
-      questionIndex,
-      isCorrect: false,
-      userAnswer: "skipped",
-      timeSpent: 0,
-    };
-
-    const isLastQuestion = questionIndex === level.questions.length - 1;
-    const nextQuestionIndex = isLastQuestion ? null : questionIndex + 1;
-    const isCompleted = isLastQuestion || livesRemaining === 0;
-
-    const updateData: any = {
-      lives: livesRemaining,
-      $push: { answeredQuestions: answeredQuestion },
-    };
-
-    if (isCompleted) {
-      const stars = this.calculateStars(livesRemaining);
-      updateData.status = GameSessionStatus.COMPLETED;
-      updateData.endTime = new Date();
-      updateData.stars = stars;
-      updateData.currentQuestionIndex = level.questions.length;
-    } else {
-      updateData.currentQuestionIndex = nextQuestionIndex;
-    }
-
-    await this.gameSessionModel.findByIdAndUpdate(session._id, updateData);
-
-    if (isCompleted) {
-      await this.updateProgressAndStats(session._id.toString(), userId);
-    }
-
-    const correctAnswer = this.getCorrectAnswer(question);
-
-    return {
-      isCorrect: false,
-      livesRemaining,
-      correctAnswer,
-      isLastQuestion,
-      nextQuestionIndex:
-        nextQuestionIndex !== null ? nextQuestionIndex : undefined,
+      // No nextQuestionIndex since frontend handles question order
     };
   }
 

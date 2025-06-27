@@ -4,6 +4,7 @@ import { Args, ID, Mutation, Query, Resolver } from "@nestjs/graphql";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
 import { GqlAuthGuard } from "../common/guards/gql-auth.guard";
 import { JwtPayload } from "../common/interfaces/jwt-payload.interface";
+import { CourseWithProgress } from "./dto/course-with-progress.dto";
 import { ProgressService } from "./progress.service";
 import { CourseProgress } from "./schemas/course-progress.schema";
 
@@ -40,5 +41,12 @@ export class ProgressResolver {
     @CurrentUser() user: JwtPayload
   ): Promise<CourseProgress[]> {
     return this.progressService.getUserCompletedCourses(user.sub);
+  }
+
+  @Query(() => [CourseWithProgress])
+  async myCoursesWithProgress(
+    @CurrentUser() user: JwtPayload
+  ): Promise<CourseWithProgress[]> {
+    return this.progressService.getCoursesWithProgress(user.sub);
   }
 }

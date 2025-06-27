@@ -5,6 +5,7 @@ import { Model } from "mongoose";
 import { ChaptersService } from "../chapters/chapters.service";
 import { CoursesService } from "../courses/courses.service";
 import { LevelsService } from "../levels/levels.service";
+import { CourseWithProgress } from "./dto/course-with-progress.dto";
 import {
   CourseProgress,
   CourseProgressDocument,
@@ -141,6 +142,38 @@ export class ProgressService {
       .find({ userId, isCompleted: true })
       .sort({ updatedAt: -1 })
       .exec();
+  }
+
+  async getCoursesWithProgress(userId: string): Promise<CourseWithProgress[]> {
+    // Get all course progress for the user where they are currently playing (not completed)
+    const progressRecords = await this.progressModel
+      .find({ 
+        userId, 
+        isCompleted: false,
+        completedLevels: { $gt: 0 } // Only courses where user has made some progress
+      })
+      .sort({ updatedAt: -1 })
+      .exec();
+
+    const coursesWithProgress: CourseWithProgress[] = [];
+
+    for (const progress of progressRecords) {
+      try {
+        // Get the course details
+        const course = await this.coursesService.findById(progress.courseId, userId);
+        
+        coursesWithProgress.push({
+          course,
+          progress,
+        });
+      } catch (error) {
+        // Skip courses that user no longer has access to or that were deleted
+        console.warn(`Could not fetch course ${progress.courseId} for user ${userId}:`, error.message);
+        continue;
+      }
+    }
+
+    return coursesWithProgress;
   }
 
   private async calculateCourseProgress(

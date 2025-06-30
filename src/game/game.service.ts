@@ -158,64 +158,71 @@ export class GameService {
     // Evaluate the answer
     const isCorrect = this.evaluateAnswer(question, input);
 
-    // Update lives if answer is incorrect
-    const livesRemaining = isCorrect
-      ? session.lives
-      : Math.max(0, session.lives - 1);
-
-    // Record the answer
-    const answeredQuestion = {
-      questionIndex: input.questionIndex,
-      isCorrect,
-      userAnswer: this.getUserAnswer(input),
-      timeSpent: input.timeSpent,
-    };
-
     // Check if this is the last question
     const isLastQuestion = input.questionIndex === level.questions.length - 1;
 
-    // Determine next question index
-    const nextQuestionIndex = isLastQuestion ? null : input.questionIndex + 1;
+    let updateData: any = {};
+    let livesRemaining = session.lives;
+    let nextQuestionIndex: number | null = null;
 
-    // Check if session is completed (last question or no lives left)
-    const isCompleted = isLastQuestion || livesRemaining === 0;
+    if (isCorrect) {
+      // Respuesta correcta: registrar la respuesta y avanzar a la siguiente pregunta
+      const answeredQuestion = {
+        questionIndex: input.questionIndex,
+        isCorrect: true,
+        userAnswer: this.getUserAnswer(input),
+        timeSpent: input.timeSpent,
+      };
 
-    // Update session
-    const updateData: any = {
-      lives: livesRemaining,
-      $push: { answeredQuestions: answeredQuestion },
-    };
+      updateData.$push = { answeredQuestions: answeredQuestion };
 
-    if (isCompleted) {
-      // Calculate stars based on lives remaining
-      const stars = this.calculateStars(livesRemaining);
-
-      updateData.status = GameSessionStatus.COMPLETED;
-      updateData.endTime = now;
-      updateData.stars = stars;
-      updateData.currentQuestionIndex = level.questions.length; // Mark all questions as seen
+      if (isLastQuestion) {
+        // Completar el nivel
+        const stars = this.calculateStars(session.lives);
+        updateData.status = GameSessionStatus.COMPLETED;
+        updateData.endTime = now;
+        updateData.stars = stars;
+        updateData.currentQuestionIndex = level.questions.length;
+      } else {
+        // Avanzar a la siguiente pregunta
+        nextQuestionIndex = input.questionIndex + 1;
+        updateData.currentQuestionIndex = nextQuestionIndex;
+      }
     } else {
-      updateData.currentQuestionIndex = nextQuestionIndex;
+      // Respuesta incorrecta: perder vida pero NO registrar la respuesta ni avanzar
+      livesRemaining = Math.max(0, session.lives - 1);
+      updateData.lives = livesRemaining;
+
+      // Si se quedan sin vidas, completar el nivel con las respuestas que tengan
+      if (livesRemaining === 0) {
+        const stars = this.calculateStars(livesRemaining);
+        updateData.status = GameSessionStatus.COMPLETED;
+        updateData.endTime = now;
+        updateData.stars = stars;
+        updateData.currentQuestionIndex = level.questions.length;
+      }
+      // Si aún tienen vidas, mantener la misma pregunta (no cambiar currentQuestionIndex)
     }
 
+    // Actualizar la sesión
     await this.gameSessionModel.findByIdAndUpdate(session._id, updateData);
 
-    // If completed, update progress and stats
+    // Si se completó el nivel, actualizar progreso y estadísticas
+    const isCompleted = updateData.status === GameSessionStatus.COMPLETED;
     if (isCompleted) {
       await this.updateProgress(session._id.toString(), userId);
       await this.updateUserStats(session._id.toString(), userId);
     }
 
-    // Prepare the result
+    // Preparar la respuesta
     const correctAnswer = this.getCorrectAnswer(question);
 
     return {
       isCorrect,
       livesRemaining,
       correctAnswer,
-      isLastQuestion,
-      nextQuestionIndex:
-        nextQuestionIndex !== null ? nextQuestionIndex : undefined,
+      isLastQuestion: isCompleted, // Solo es la última pregunta si se completó el nivel
+      nextQuestionIndex: nextQuestionIndex !== null ? nextQuestionIndex : undefined,
     };
   }
 
@@ -247,61 +254,56 @@ export class GameService {
 
     const question = level.questions[questionIndex];
 
-    // Skipping costs a life
+    // Skipping costs a life but doesn't advance to next question
     const livesRemaining = Math.max(0, session.lives - 1);
-
-    // Record the skipped question
-    const answeredQuestion = {
-      questionIndex,
-      isCorrect: false,
-      userAnswer: "skipped",
-    };
 
     // Check if this is the last question
     const isLastQuestion = questionIndex === level.questions.length - 1;
 
-    // Determine next question index
-    const nextQuestionIndex = isLastQuestion ? null : questionIndex + 1;
-
-    // Check if session is completed (last question or no lives left)
-    const isCompleted = isLastQuestion || livesRemaining === 0;
-
     // Update session
     const updateData: any = {
       lives: livesRemaining,
-      $push: { answeredQuestions: answeredQuestion },
     };
 
-    if (isCompleted) {
-      // Calculate stars based on lives remaining
-      const stars = this.calculateStars(livesRemaining);
+    // Si se quedan sin vidas o es la última pregunta, completar el nivel
+    if (livesRemaining === 0 || isLastQuestion) {
+      // Si es skip en la última pregunta, registrar como respuesta incorrecta
+      if (isLastQuestion) {
+        const answeredQuestion = {
+          questionIndex,
+          isCorrect: false,
+          userAnswer: "skipped",
+          timeSpent: 0,
+        };
+        updateData.$push = { answeredQuestions: answeredQuestion };
+      }
 
+      const stars = this.calculateStars(livesRemaining);
       updateData.status = GameSessionStatus.COMPLETED;
       updateData.endTime = new Date();
       updateData.stars = stars;
-      updateData.currentQuestionIndex = level.questions.length; // Mark all questions as seen
-    } else {
-      updateData.currentQuestionIndex = nextQuestionIndex;
+      updateData.currentQuestionIndex = level.questions.length;
     }
+    // Si aún tienen vidas y no es la última pregunta, mantener la misma pregunta
 
     await this.gameSessionModel.findByIdAndUpdate(session._id, updateData);
 
-    // If completed, update progress and stats
+    // Si se completó, actualizar progreso y estadísticas
+    const isCompleted = updateData.status === GameSessionStatus.COMPLETED;
     if (isCompleted) {
       await this.updateProgress(session._id.toString(), userId);
       await this.updateUserStats(session._id.toString(), userId);
     }
 
-    // Prepare the result
+    // Preparar la respuesta
     const correctAnswer = this.getCorrectAnswer(question);
 
     return {
       isCorrect: false,
       livesRemaining,
       correctAnswer,
-      isLastQuestion,
-      nextQuestionIndex:
-        nextQuestionIndex !== null ? nextQuestionIndex : undefined,
+      isLastQuestion: isCompleted,
+      nextQuestionIndex: undefined, // No avanzar de pregunta al hacer skip
     };
   }
 

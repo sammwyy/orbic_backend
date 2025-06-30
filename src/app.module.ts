@@ -10,6 +10,7 @@ import { AiModule } from "./ai/ai.module";
 import { AuthModule } from "./auth/auth.module";
 import { ChaptersModule } from "./chapters/chapters.module";
 import { CoursesModule } from "./courses/courses.module";
+import { EmailModule } from "./email/email.module";
 import { GameModule } from "./game/game.module";
 import { LevelsModule } from "./levels/levels.module";
 import { ProgressModule } from "./progress/progress.module";
@@ -57,6 +58,7 @@ import { UsersModule } from "./users/users.module";
 
     ScheduleModule.forRoot(),
 
+    EmailModule,
     AuthModule,
     SessionsModule,
     StorageModule,

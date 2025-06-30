@@ -104,6 +104,16 @@ export class UsersService {
     return true;
   }
 
+  async generatePasswordResetCode(userId: string): Promise<string> {
+    const resetCode = uuidv4();
+
+    await this.userModel.findByIdAndUpdate(userId, {
+      $set: { passwordResetCode: resetCode },
+    });
+
+    return resetCode;
+  }
+
   async requestPasswordReset(email: string): Promise<boolean> {
     const user = await this.findByEmail(email);
 
@@ -112,11 +122,7 @@ export class UsersService {
       return true;
     }
 
-    const resetCode = uuidv4();
-
-    await this.userModel.findByIdAndUpdate(user._id, {
-      $set: { passwordResetCode: resetCode },
-    });
+    const resetCode = await this.generatePasswordResetCode(user._id.toString());
 
     // TODO: Send email with reset code
     console.log(`Password reset code for ${email}: ${resetCode}`);

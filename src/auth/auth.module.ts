@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { AuthResolver } from './auth.resolver';
 import { UsersModule } from '../users/users.module';
 import { SessionsModule } from '../sessions/sessions.module';
+import { EmailModule } from '../email/email.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 
@@ -24,6 +25,7 @@ import { LocalStrategy } from './strategies/local.strategy';
     }),
     UsersModule,
     SessionsModule,
+    EmailModule,
   ],
   providers: [AuthResolver, AuthService, JwtStrategy, LocalStrategy],
 })

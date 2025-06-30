@@ -8,13 +8,13 @@ import { JwtService } from "@nestjs/jwt";
 
 import { JwtPayload } from "@/common/interfaces/jwt-payload.interface";
 import { Types } from "mongoose";
+import { EmailService } from "../email/email.service";
 import { SessionsService } from "../sessions/sessions.service";
 import { User } from "../users/schemas/user.schema";
 import { UsersService } from "../users/users.service";
 import { AuthPayload } from "./dto/auth-payload.dto";
 import { LoginInput } from "./dto/login.input";
 import { RegisterUserInput } from "./dto/register-user.input";
-import { SessionsModule } from "@/sessions/sessions.module";
 
 @Injectable()
 export class AuthService {
@@ -22,7 +22,8 @@ export class AuthService {
     private usersService: UsersService,
     private sessionsService: SessionsService,
     private jwtService: JwtService,
-    private configService: ConfigService
+    private configService: ConfigService,
+    private emailService: EmailService
   ) {}
 
   async register(
@@ -36,9 +37,18 @@ export class AuthService {
       registerUserInput.displayName
     );
 
-    console.log(
-      `Email verification code for ${user.email}: ${user.emailVerificationCode}`
+    // Send email verification
+    const emailSent = await this.emailService.sendEmailVerification(
+      user.email,
+      user.emailVerificationCode!,
+      user.displayName
     );
+
+    if (!emailSent) {
+      console.log(
+        `Email verification code for ${user.email}: ${user.emailVerificationCode}`
+      );
+    }
 
     const tokens = await this.createSession(user, sessionInfo);
 
@@ -99,7 +109,27 @@ export class AuthService {
   }
 
   async requestPasswordReset(email: string): Promise<boolean> {
-    return this.usersService.requestPasswordReset(email);
+    const user = await this.usersService.findByEmail(email);
+
+    if (!user) {
+      // Don't reveal if email exists
+      return true;
+    }
+
+    const resetCode = await this.usersService.generatePasswordResetCode(user._id.toString());
+
+    // Send password reset email
+    const emailSent = await this.emailService.sendPasswordReset(
+      user.email,
+      resetCode,
+      user.displayName
+    );
+
+    if (!emailSent) {
+      console.log(`Password reset code for ${email}: ${resetCode}`);
+    }
+
+    return true;
   }
 
   async resetPassword(code: string, newPassword: string): Promise<boolean> {

@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
 
-import { FileSchema } from "./schemas/file.schema";
+import { FileSchema, File } from "./schemas/file.schema";
 import { StorageResolver } from "./storage.resolver";
 import { StorageService } from "./storage.service";
 

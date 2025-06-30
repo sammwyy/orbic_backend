@@ -12,7 +12,7 @@ import { GenerateCourseFromTextInput } from "./dto/generate-course-from-text.inp
 import { GeneratedCoursePreview } from "./dto/generated-course-preview.dto";
 
 @Resolver()
-@UseGuards(GqlAuthGuard, EmailVerifiedGuard)
+@UseGuards(GqlAuthGuard)
 export class AiResolver {
   constructor(private readonly aiService: AiService) {}
 

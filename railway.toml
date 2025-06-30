@@ -1,0 +1,3 @@
+[service]
+name = "api"
+start = "npm run start:prod"

@@ -32,6 +32,7 @@ export class LevelProgress {
 }
 
 @ObjectType()
+@Schema({ _id: false })
 export class ChapterProgress {
   @Field(() => String)
   chapterId: string;
@@ -72,7 +73,21 @@ export class CourseProgress {
   @Field(() => String)
   courseId: string;
 
-  @Prop({ type: Array, default: [] })
+  @Prop({
+    type: [
+      {
+        levelId: { type: String, required: true },
+        completed: { type: Boolean, default: false },
+        bestScore: { type: Number, default: 0 },
+        bestStars: { type: Number, default: 0 },
+        attempts: { type: Number, default: 0 },
+        totalTimeSpent: { type: Number, default: 0 },
+        firstCompletedAt: { type: Date },
+        lastCompletedAt: { type: Date },
+      },
+    ],
+    default: [],
+  })
   @Field(() => [LevelProgress])
   levelProgress: LevelProgress[];
 

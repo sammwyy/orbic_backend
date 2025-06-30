@@ -16,10 +16,14 @@ registerEnumType(GameSessionStatus, {
   description: "Game session status options",
 });
 
+@ObjectType()
 export class AnsweredQuestion {
+  @Field(() => Int)
   questionIndex: number;
+  @Field()
   isCorrect: boolean;
   userAnswer: any;
+  @Field()
   timeSpent: number; // in seconds
 }
 
@@ -50,6 +54,7 @@ export class GameSession {
   lives: number;
 
   @Prop({ type: Array, default: [] })
+  @Field(() => [AnsweredQuestion])
   answeredQuestions: AnsweredQuestion[];
 
   @Prop({ required: true })

@@ -2,6 +2,12 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type AnsweredQuestion {
+  isCorrect: Boolean!
+  questionIndex: Int!
+  timeSpent: Float!
+}
+
 type AuthPayload {
   accessToken: String!
   refreshToken: String!
@@ -118,6 +124,11 @@ enum CourseVisibility {
   PUBLIC
 }
 
+type CourseWithProgress {
+  course: Course!
+  progress: CourseProgress!
+}
+
 type CoursesConnection {
   courses: [Course!]!
   hasMore: Boolean!
@@ -194,6 +205,7 @@ type FreeChoiceQuestion {
 
 type GameSession {
   _id: ID!
+  answeredQuestions: [AnsweredQuestion!]!
   chapterId: String!
   courseId: String!
   createdAt: DateTime!
@@ -367,6 +379,7 @@ type Query {
   me: User!
   myCompletedCourses: [CourseProgress!]!
   myCourses(limit: Int = 20, offset: Int = 0): CoursesConnection!
+  myCoursesWithProgress: [CourseWithProgress!]!
   myPlayingCourses: [CourseProgress!]!
   myStats: UserStats!
   previewGeneratedCourse(jobId: String!): GeneratedCoursePreview!

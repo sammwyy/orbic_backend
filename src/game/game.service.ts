@@ -161,7 +161,10 @@ export class GameService {
     // Check if this is the last question based on answered questions count
     const totalAnsweredAfterThis = session.answeredQuestions.length + 1;
     const isLastQuestion = totalAnsweredAfterThis >= level.questions.length;
-    
+    console.log(
+      `Questions: ${level.questions.length}, After this answered: ${totalAnsweredAfterThis}, isLastQuestion: ${isLastQuestion}`
+    );
+
     // Session is completed if all questions answered or no lives left
     const isCompleted = isLastQuestion || livesRemaining === 0;
 
@@ -185,6 +188,7 @@ export class GameService {
     await this.gameSessionModel.findByIdAndUpdate(session._id, updateData);
 
     if (isCompleted) {
+      console.log("Updating progress and stats");
       await this.updateProgressAndStats(session._id.toString(), userId);
     }
 
@@ -315,8 +319,10 @@ export class GameService {
     userId: string
   ): Promise<void> {
     const session = await this.gameSessionModel.findById(sessionId);
-    if (!session || session.userId !== userId) {
-      throw new ForbiddenException("Access denied to this session");
+    if (!session) {
+      throw new ForbiddenException(
+        "Access denied to this session: Doesn't exist"
+      );
     }
 
     const timeSpent = session.endTime
@@ -328,16 +334,17 @@ export class GameService {
     const livesLost = 3 - session.lives;
 
     // Update progress
-    const { isCourseCompleted } = await this.progressService.updateLevelProgress(
-      session.courseId,
-      userId,
-      session.levelId,
-      {
-        score: session.score,
-        stars: session.stars,
-        timeSpent,
-      }
-    );
+    const { isCourseCompleted } =
+      await this.progressService.updateLevelProgress(
+        session.courseId,
+        userId,
+        session.levelId,
+        {
+          score: session.score,
+          stars: session.stars,
+          timeSpent,
+        }
+      );
 
     // Update stats
     await this.statsService.updateUserStats(
@@ -354,7 +361,10 @@ export class GameService {
     );
   }
 
-  private evaluateAnswer(question: any, input: SubmitAnswerInput): boolean {
+  private evaluateAnswer(
+    question: QuestionUnion,
+    input: SubmitAnswerInput
+  ): boolean {
     switch (question.type) {
       case QuestionType.TRUE_FALSE:
         return question.correctAnswer === input.booleanAnswer;
@@ -437,7 +447,7 @@ export class GameService {
     return null;
   }
 
-  private getCorrectAnswer(question: QuestionUnion): any {
+  private getCorrectAnswer(question: QuestionUnion): string[] {
     switch (question.type) {
       case QuestionType.TRUE_FALSE:
         return [question.correctAnswer ? "true" : "false"];
@@ -454,9 +464,10 @@ export class GameService {
         return question.correctSequence;
 
       case QuestionType.FREE_CHOICE:
-        return question.acceptedAnswers[0];
+        return question.acceptedAnswers;
 
       default:
+        console.error("Invalid question type");
         return null;
     }
   }

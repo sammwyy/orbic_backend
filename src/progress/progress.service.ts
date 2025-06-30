@@ -35,9 +35,7 @@ export class ProgressService {
   ): Promise<CourseProgressDocument> {
     await this.coursesService.findById(courseId, userId);
 
-    const existingProgress = await this.progressModel
-      .findOne({ courseId, userId })
-      .exec();
+    const existingProgress = await this.getCourseProgress(courseId, userId);
     if (existingProgress) {
       return existingProgress;
     }
@@ -70,11 +68,7 @@ export class ProgressService {
       timeSpent: number;
     }
   ): Promise<{ progress: CourseProgress; isCourseCompleted: boolean }> {
-    let progress = await this.getCourseProgress(courseId, userId);
-
-    if (!progress) {
-      progress = await this.initializeCourseProgress(courseId, userId);
-    }
+    let progress = await this.initializeCourseProgress(courseId, userId);
 
     // Update level progress
     const existingLevelIndex = progress.levelProgress.findIndex(
@@ -100,7 +94,7 @@ export class ProgressService {
         levelProg.lastCompletedAt = new Date();
       }
     } else {
-      progress.levelProgress.push({
+      const newLevelProgress = {
         levelId,
         completed: sessionData.score > 0,
         bestScore: sessionData.score,
@@ -109,7 +103,9 @@ export class ProgressService {
         totalTimeSpent: sessionData.timeSpent,
         firstCompletedAt: sessionData.score > 0 ? new Date() : undefined,
         lastCompletedAt: sessionData.score > 0 ? new Date() : undefined,
-      });
+      };
+
+      progress.levelProgress.push(newLevelProgress);
     }
 
     // Recalculate course progress
@@ -121,9 +117,7 @@ export class ProgressService {
 
     // Update progress document
     Object.assign(progress, courseProgressData);
-
     await progress.save();
-
     return {
       progress,
       isCourseCompleted: courseProgressData.isCompleted,
@@ -147,10 +141,10 @@ export class ProgressService {
   async getCoursesWithProgress(userId: string): Promise<CourseWithProgress[]> {
     // Get all course progress for the user where they are currently playing (not completed)
     const progressRecords = await this.progressModel
-      .find({ 
-        userId, 
+      .find({
+        userId,
         isCompleted: false,
-        completedLevels: { $gt: 0 } // Only courses where user has made some progress
+        completedLevels: { $gt: 0 }, // Only courses where user has made some progress
       })
       .sort({ updatedAt: -1 })
       .exec();
@@ -160,15 +154,21 @@ export class ProgressService {
     for (const progress of progressRecords) {
       try {
         // Get the course details
-        const course = await this.coursesService.findById(progress.courseId, userId);
-        
+        const course = await this.coursesService.findById(
+          progress.courseId,
+          userId
+        );
+
         coursesWithProgress.push({
           course,
           progress,
         });
       } catch (error) {
         // Skip courses that user no longer has access to or that were deleted
-        console.warn(`Could not fetch course ${progress.courseId} for user ${userId}:`, error.message);
+        console.warn(
+          `Could not fetch course ${progress.courseId} for user ${userId}:`,
+          error.message
+        );
         continue;
       }
     }
@@ -210,10 +210,7 @@ export class ProgressService {
       completedLevels += completedLevelsInChapter;
       totalStars += starsInChapter;
 
-      if (
-        completedLevelsInChapter === levels.length &&
-        levels.length > 0
-      ) {
+      if (completedLevelsInChapter === levels.length && levels.length > 0) {
         completedChapters++;
       }
     }

@@ -2,6 +2,12 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type AnsweredQuestion {
+  isCorrect: Boolean!
+  questionIndex: Int!
+  timeSpent: Float!
+}
+
 type AuthPayload {
   accessToken: String!
   refreshToken: String!
@@ -9,7 +15,7 @@ type AuthPayload {
   user: User!
 }
 
-type CategoryStats {
+type CategoryStat {
   category: CourseCategory!
   coursesCompleted: Int!
   levelsCompleted: Int!
@@ -28,13 +34,13 @@ type Chapter {
   updatedAt: DateTime!
 }
 
-type ChapterProgressDto {
+type ChapterProgress {
   chapterId: String!
+  completedAt: DateTime!
   completedLevels: Int!
   isCompleted: Boolean!
-  isLocked: Boolean!
+  isUnlocked: Boolean!
   maxPossibleStars: Int!
-  title: String!
   totalLevels: Int!
   totalStars: Int!
 }
@@ -94,29 +100,21 @@ type CourseGenerationStatus {
 
 type CourseProgress {
   _id: ID!
-  completed: Boolean!
-  courseId: String!
-  createdAt: DateTime!
-  currentChapter: Int!
-  currentLevel: Int!
-  levelProgress: [LevelProgress!]!
-  totalMaxScore: Int!
-  totalScore: Int!
-  updatedAt: DateTime!
-  userId: String!
-}
-
-type CourseProgressDto {
-  chapterProgress: [ChapterProgressDto!]!
+  chapterProgress: [ChapterProgress!]!
+  completedAt: DateTime
   completedChapters: Int!
   completedLevels: Int!
-  completionPercentage: Int!
   courseId: String!
+  createdAt: DateTime!
   isCompleted: Boolean!
-  maxPossibleStars: Int!
+  levelProgress: [LevelProgress!]!
   totalChapters: Int!
   totalLevels: Int!
+  totalScore: Int!
   totalStars: Int!
+  totalTimeSpent: Int!
+  updatedAt: DateTime!
+  userId: String!
 }
 
 """Course visibility options"""
@@ -124,6 +122,11 @@ enum CourseVisibility {
   LINK_ONLY
   PRIVATE
   PUBLIC
+}
+
+type CourseWithProgress {
+  course: Course!
+  progress: CourseProgress!
 }
 
 type CoursesConnection {
@@ -166,6 +169,14 @@ input CreateLevelInput {
   title: String!
 }
 
+type DailyActivity {
+  date: DateTime!
+  levelsCompleted: Int!
+  score: Int!
+  starsEarned: Int!
+  timeSpent: Int!
+}
+
 """
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
@@ -194,10 +205,10 @@ type FreeChoiceQuestion {
 
 type GameSession {
   _id: ID!
+  answeredQuestions: [AnsweredQuestion!]!
   chapterId: String!
   courseId: String!
   createdAt: DateTime!
-  currentQuestionIndex: Int!
   endTime: DateTime
   levelId: String!
   lives: Int!
@@ -253,14 +264,6 @@ type Level {
   updatedAt: DateTime!
 }
 
-type LevelAttempt {
-  completedAt: DateTime!
-  score: Int!
-  sessionId: String!
-  stars: Int!
-  timeSpent: Int!
-}
-
 type LevelCompletionDto {
   chapterId: String!
   correctAnswers: Int!
@@ -279,20 +282,12 @@ type LevelCompletionDto {
 
 type LevelProgress {
   attempts: Int!
-  completed: Boolean!
-  completedAt: DateTime!
-  levelId: String!
-  maxScore: Int!
-  score: Int!
-}
-
-type LevelProgressDto {
-  attempts: Int!
   bestScore: Int!
   bestStars: Int!
-  isCompleted: Boolean!
+  completed: Boolean!
+  firstCompletedAt: DateTime!
+  lastCompletedAt: DateTime!
   levelId: String!
-  recentAttempts: [LevelAttempt!]!
   totalTimeSpent: Int!
 }
 
@@ -340,7 +335,6 @@ type Mutation {
   reorderLevels(chapterId: ID!, levelIds: [ID!]!): [Level!]!
   requestPasswordReset(email: String!): Boolean!
   resetPassword(code: String!, newPassword: String!): Boolean!
-  skipQuestion(sessionId: String!): QuestionResultDto!
   startLevel(input: StartGameSessionInput!): GameSession!
   submitAnswer(input: SubmitAnswerInput!): QuestionResultDto!
   updateChapter(id: ID!, input: UpdateChapterInput!): Chapter!
@@ -372,7 +366,6 @@ type Query {
   chapterLevels(chapterId: ID!): [Level!]!
   course(id: ID!): Course
   courseChapters(courseId: ID!): [Chapter!]!
-  courseGameProgress(courseId: ID!): CourseProgressDto!
   courseLevels(courseId: ID!): [Level!]!
   courseProgress(courseId: ID!): CourseProgress
   courses(filter: CourseFilterInput, limit: Int = 20, offset: Int = 0): CoursesConnection!
@@ -383,12 +376,12 @@ type Query {
   getUserStorageStats: UserStorageStats!
   level(id: ID!): Level
   levelCompletion(sessionId: ID!): LevelCompletionDto!
-  levelProgress(levelId: ID!): LevelProgressDto!
   me: User!
   myCompletedCourses: [CourseProgress!]!
   myCourses(limit: Int = 20, offset: Int = 0): CoursesConnection!
+  myCoursesWithProgress: [CourseWithProgress!]!
   myPlayingCourses: [CourseProgress!]!
-  myStats: UserStatsDto!
+  myStats: UserStats!
   previewGeneratedCourse(jobId: String!): GeneratedCoursePreview!
   publicCourses(limit: Int = 20, offset: Int = 0): CoursesConnection!
 }
@@ -410,7 +403,6 @@ type QuestionResultDto {
   isCorrect: Boolean!
   isLastQuestion: Boolean!
   livesRemaining: Int!
-  nextQuestionIndex: Int
 }
 
 """Available question types"""
@@ -494,9 +486,12 @@ type User {
   username: String!
 }
 
-type UserStatsDto {
-  categoriesStats: [CategoryStats!]!
+type UserStats {
+  _id: ID!
+  categoryStats: [CategoryStat!]!
+  createdAt: DateTime!
   currentStreak: Int!
+  dailyActivity: [DailyActivity!]!
   longestStreak: Int!
   totalCoursesCompleted: Int!
   totalLevelsCompleted: Int!
@@ -504,6 +499,8 @@ type UserStatsDto {
   totalScore: Int!
   totalStarsEarned: Int!
   totalTimeSpent: Int!
+  updatedAt: DateTime!
+  userId: String!
 }
 
 type UserStorageStats {

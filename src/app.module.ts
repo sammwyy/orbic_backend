@@ -14,6 +14,7 @@ import { GameModule } from "./game/game.module";
 import { LevelsModule } from "./levels/levels.module";
 import { ProgressModule } from "./progress/progress.module";
 import { SessionsModule } from "./sessions/sessions.module";
+import { StatsModule } from "./stats/stats.module";
 import { StorageModule } from "./storage/storage.module";
 import { UsersModule } from "./users/users.module";
 
@@ -64,6 +65,7 @@ import { UsersModule } from "./users/users.module";
     ChaptersModule,
     LevelsModule,
     ProgressModule,
+    StatsModule,
     AiModule,
     GameModule,
   ],

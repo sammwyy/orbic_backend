@@ -13,7 +13,4 @@ export class QuestionResultDto {
 
   @Field()
   isLastQuestion: boolean;
-
-  @Field(() => Int, { nullable: true })
-  nextQuestionIndex?: number;
 }

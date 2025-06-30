@@ -5,19 +5,39 @@ import { CourseCategory } from "../../courses/schemas/course.schema";
 
 export type UserStatsDocument = UserStats & Document;
 
+@ObjectType()
 export class CategoryStat {
+  @Field(() => CourseCategory)
   category: CourseCategory;
+
+  @Field(() => Int)
   coursesCompleted: number;
+
+  @Field(() => Int)
   levelsCompleted: number;
+
+  @Field(() => Int)
   totalStars: number;
+
+  @Field(() => Int)
   totalScore: number;
 }
 
+@ObjectType()
 export class DailyActivity {
+  @Field()
   date: Date;
+
+  @Field(() => Int)
   levelsCompleted: number;
+
+  @Field(() => Int)
   timeSpent: number; // in seconds
+
+  @Field(() => Int)
   starsEarned: number;
+
+  @Field(() => Int)
   score: number;
 }
 
@@ -64,9 +84,11 @@ export class UserStats {
   longestStreak: number;
 
   @Prop({ type: Array, default: [] })
+  @Field(() => [CategoryStat])
   categoryStats: CategoryStat[];
 
   @Prop({ type: Array, default: [] })
+  @Field(() => [DailyActivity])
   dailyActivity: DailyActivity[];
 
   @Prop()

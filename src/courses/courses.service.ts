@@ -53,8 +53,8 @@ export class CoursesService {
     }
 
     // Check access permissions
-    if (!this.canAccessCourse(course, userId)) {
-      throw new ForbiddenException("Access denied to this course");
+    if (userId && !this.canAccessCourse(course, userId)) {
+      throw new ForbiddenException("Access denied to this course (No access)");
     }
 
     return course;

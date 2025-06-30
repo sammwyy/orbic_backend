@@ -2,6 +2,7 @@ import { UseGuards } from "@nestjs/common";
 import { Args, Mutation, Query, Resolver } from "@nestjs/graphql";
 
 import { CurrentUser } from "@/common/decorators/current-user.decorator";
+import { EmailVerifiedGuard } from "@/common/guards/email-verified.guard";
 import { GqlAuthGuard } from "@/common/guards/gql-auth.guard";
 import { JwtPayload } from "@/common/interfaces/jwt-payload.interface";
 import { AiService } from "./ai.service";
@@ -11,7 +12,7 @@ import { GenerateCourseFromTextInput } from "./dto/generate-course-from-text.inp
 import { GeneratedCoursePreview } from "./dto/generated-course-preview.dto";
 
 @Resolver()
-@UseGuards(GqlAuthGuard)
+@UseGuards(GqlAuthGuard, EmailVerifiedGuard)
 export class AiResolver {
   constructor(private readonly aiService: AiService) {}
 

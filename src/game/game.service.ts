@@ -121,13 +121,13 @@ export class GameService {
       throw new BadRequestException("Question index out of bounds");
     }
 
-    // Check if this question was already answered
-    const alreadyAnswered = session.answeredQuestions.some(
-      (aq) => aq.questionIndex === input.questionIndex
+    // Check if this question was already answered CORRECTLY
+    const alreadyAnsweredCorrectly = session.answeredQuestions.some(
+      (aq) => aq.questionIndex === input.questionIndex && aq.isCorrect
     );
 
-    if (alreadyAnswered) {
-      throw new BadRequestException("Question already answered");
+    if (alreadyAnsweredCorrectly) {
+      throw new BadRequestException("Question already answered correctly");
     }
 
     const question = level.questions[input.questionIndex];
@@ -147,36 +147,46 @@ export class GameService {
     }
 
     const isCorrect = this.evaluateAnswer(question, input);
+    
+    // Calculate new lives: only lose life if answer is incorrect
     const livesRemaining = isCorrect
       ? session.lives
       : Math.max(0, session.lives - 1);
 
-    const answeredQuestion = {
-      questionIndex: input.questionIndex,
-      isCorrect,
-      userAnswer: this.getUserAnswer(input),
-      timeSpent: input.timeSpent,
+    // Only add to answeredQuestions if the answer is CORRECT
+    let updateData: any = {
+      lives: livesRemaining,
     };
 
-    // Check if this is the last question based on answered questions count
-    const totalAnsweredAfterThis = session.answeredQuestions.length + 1;
-    const isLastQuestion = totalAnsweredAfterThis >= level.questions.length;
+    if (isCorrect) {
+      const answeredQuestion = {
+        questionIndex: input.questionIndex,
+        isCorrect: true,
+        userAnswer: this.getUserAnswer(input),
+        timeSpent: input.timeSpent,
+      };
+
+      // Add question to answered questions and update score
+      const questionScore = 100;
+      const newScore = session.score + questionScore;
+
+      updateData.score = newScore;
+      updateData.$push = { answeredQuestions: answeredQuestion };
+    }
+
+    // Check if this is the last question based on correctly answered questions count
+    const totalCorrectAnswersAfterThis = isCorrect 
+      ? session.answeredQuestions.length + 1 
+      : session.answeredQuestions.length;
+    
+    const isLastQuestion = totalCorrectAnswersAfterThis >= level.questions.length;
+
     console.log(
-      `Questions: ${level.questions.length}, After this answered: ${totalAnsweredAfterThis}, isLastQuestion: ${isLastQuestion}`
+      `Questions: ${level.questions.length}, Correct answers after this: ${totalCorrectAnswersAfterThis}, isLastQuestion: ${isLastQuestion}`
     );
 
-    // Session is completed if all questions answered or no lives left
+    // Session is completed if all questions answered correctly or no lives left
     const isCompleted = isLastQuestion || livesRemaining === 0;
-
-    // Calculate score
-    const questionScore = isCorrect ? 100 : 0;
-    const newScore = session.score + questionScore;
-
-    const updateData: any = {
-      lives: livesRemaining,
-      score: newScore,
-      $push: { answeredQuestions: answeredQuestion },
-    };
 
     if (isCompleted) {
       const stars = this.calculateStars(livesRemaining);
@@ -199,7 +209,6 @@ export class GameService {
       livesRemaining,
       correctAnswer,
       isLastQuestion,
-      // No nextQuestionIndex since frontend handles question order
     };
   }
 

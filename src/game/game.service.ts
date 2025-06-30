@@ -194,6 +194,7 @@ export class GameService {
       updateData.endTime = now;
       updateData.stars = stars;
     }
+    // Si aún tienen vidas y no es la última pregunta, mantener la misma pregunta
 
     await this.gameSessionModel.findByIdAndUpdate(session._id, updateData);
 

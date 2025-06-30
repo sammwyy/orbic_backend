@@ -4,7 +4,7 @@ import { Logger } from "@nestjs/common";
 const MAX_TOKENS = 10000;
 
 export class GoogleAIClient {
-  private static readonly TextModel = "gemini-2.5-flash-lite-preview-06-17";
+  private static readonly TextModel = "gemini-2.5-flash";
 
   private readonly genAI: GoogleGenAI;
   private readonly logger = new Logger(GoogleAIClient.name);
